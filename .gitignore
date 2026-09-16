@@ -1,0 +1,27 @@
+# Node dependencies
+node_modules/
+npm-debug.log
+
+# Environment variables
+.env
+.env.local
+
+# Database and Cache files
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build output
+dist/
+build/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Project-specific ignored folders (User requested)
+.antigravity/
+.md/

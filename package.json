@@ -1,0 +1,40 @@
+{
+  "name": "irika-maimaitoolbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "test:login": "tsx src/test-login.ts",
+    "test:scrape": "tsx src/test-scraper.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@mai-kit/database": "^0.3.0",
+    "@mai-kit/draw": "^0.2.0",
+    "@mai-kit/prober": "^0.3.0",
+    "@mai-kit/utils": "^0.1.2",
+    "axios": "^1.20.0",
+    "axios-cookiejar-support": "^7.0.0",
+    "better-sqlite3": "^13.0.3",
+    "cheerio": "^1.2.0",
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.4.2",
+    "node-cron": "^4.6.0",
+    "skia-canvas": "^3.0.8",
+    "tough-cookie": "^6.0.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/cheerio": "^0.22.35",
+    "@types/node": "^26.5.1",
+    "@types/node-cron": "^3.0.11",
+    "@types/tough-cookie": "^4.0.5",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

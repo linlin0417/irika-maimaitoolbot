@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "setup": "node scripts/setup.js",
+    "postinstall": "npm run setup",
+    "update": "git pull && npm install",
     "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts",
-    "test:login": "tsx src/test-login.ts",
-    "test:scrape": "tsx src/test-scraper.ts"
+    "dev": "tsx watch src/index.ts"
   },
   "keywords": [],
   "author": "",

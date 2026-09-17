@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  maimaitoolbot:
+    build: .
+    container_name: irika-maimaitoolbot
+    restart: unless-stopped
+    volumes:
+      # 持久化資料庫與封面快取
+      - ./data:/app/data
+      # 映射設定檔
+      - ./.env:/app/.env
+      - ./cfg:/app/cfg
+    environment:
+      - NODE_ENV=production

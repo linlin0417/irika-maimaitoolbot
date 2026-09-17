@@ -9,6 +9,7 @@ export interface ScrapedScore {
     dx_score: number;
     fc_status: string; // e.g., '', 'fc', 'fcp', 'ap', 'app'
     fs_status: string; // e.g., '', 'fs', 'fsp', 'fsd', 'fsdp'
+    cover_url?: string;
 }
 
 // ==========================================
@@ -75,10 +76,19 @@ export const processScrapedScores = db.transaction((discordId: string, scores: S
         VALUES (?, ?, ?, ?, ?, ?)
     `);
 
+    const insertCoverStmt = db.prepare(`
+        INSERT OR REPLACE INTO song_covers (song_name, cover_url, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+    `);
+
     let newRecordsCount = 0;
     let improvedRecordsCount = 0;
 
     for (const score of scores) {
+        if (score.cover_url) {
+            insertCoverStmt.run(score.song_name, score.cover_url);
+        }
+
         const existing = getScoreStmt.get(discordId, score.song_name, score.chart_type, score.difficulty) as any;
 
         if (!existing) {

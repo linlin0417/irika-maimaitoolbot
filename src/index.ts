@@ -1,17 +1,25 @@
 import dotenv from 'dotenv';
-// 確保最優先載入環境變數
+// 確保優先讀取環境變數
 dotenv.config();
 
-import './db/index'; // 觸發資料庫初始化
+import './db/index'; // 確保資料庫初始化
 import { startScheduler } from './core/scheduler';
 import { startDiscordBot } from './discord/index';
+import { DxRatingCoverProvider } from './core/dxrating-covers';
 
-console.log('====================================');
-console.log('   Irika-MaimaiToolBot 系統啟動中   ');
-console.log('====================================');
+async function bootstrap() {
+    console.log('====================================');
+    console.log('   Irika-MaimaiToolBot 系統啟動中   ');
+    console.log('====================================');
 
-// 1. 啟動背景排程 (曲庫同步與定時爬蟲)
-startScheduler();
+    // 0. 初始化外部曲繪庫 (gekichumai/dxdata)
+    await DxRatingCoverProvider.getInstance().init();
 
-// 2. 啟動 Discord 機器人介面
-startDiscordBot();
+    // 1. 啟動排程管理器 (定時同步與爬蟲)
+    startScheduler();
+
+    // 2. 啟動 Discord 機器人
+    startDiscordBot();
+}
+
+bootstrap();

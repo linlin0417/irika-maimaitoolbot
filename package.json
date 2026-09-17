@@ -18,6 +18,7 @@
     "@mai-kit/draw": "^0.2.0",
     "@mai-kit/prober": "^0.3.0",
     "@mai-kit/utils": "^0.1.2",
+    "@napi-rs/canvas": "^1.0.9",
     "axios": "^1.20.0",
     "axios-cookiejar-support": "^7.0.0",
     "better-sqlite3": "^13.0.3",
@@ -25,7 +26,6 @@
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
     "node-cron": "^4.6.0",
-    "skia-canvas": "^3.0.8",
     "tough-cookie": "^6.0.2"
   },
   "devDependencies": {

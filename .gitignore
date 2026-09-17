@@ -25,3 +25,7 @@ Thumbs.db
 # Project-specific ignored folders (User requested)
 .antigravity/
 .md/
+
+# Configuration files
+cfg/*.cfg
+!cfg/*.cfg.example

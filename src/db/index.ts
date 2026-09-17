@@ -1,6 +1,11 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// 解決 ESM 模組下 __dirname 不存在的問題
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 資料庫檔案將建立在根目錄下的 data 資料夾 (需確保資料夾存在)
 const dataDir = path.resolve(process.cwd(), 'data');
@@ -8,12 +13,9 @@ if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
 
-import type { Database as BetterDatabase } from 'better-sqlite3';
-
 const dbPath = path.join(dataDir, 'maimai.db');
-const db: BetterDatabase = new Database(dbPath, {
+const db = new Database(dbPath, {
     // 開啟預寫式日誌 (WAL) 模式，大幅提升 SQLite 讀寫併發效能
-    // 這對我們的背景爬蟲 + 機器人查詢非常重要
 });
 
 db.pragma('journal_mode = WAL');

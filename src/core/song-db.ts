@@ -99,4 +99,17 @@ export class SongDatabase {
         // Taiwan-independence 會用負數表示 "未確定的預估底分" (例如 -11.6 代表 11+)，我們取絕對值作統一運算
         return Math.abs(constant);
     }
+
+    /**
+     * 取得所有獨一無二的曲名 (供 Discord Autocomplete 搜尋使用)
+     */
+    public getAllSongNames(): string[] {
+        if (!this.data || this.data.length === 0) return [];
+        
+        const nameSet = new Set<string>();
+        for (const song of this.data) {
+            nameSet.add(song.name);
+        }
+        return Array.from(nameSet);
+    }
 }

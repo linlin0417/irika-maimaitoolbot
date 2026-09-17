@@ -38,14 +38,16 @@ export class MaimaiScraper {
                 if (!songNameElem.length) return;
                 const songName = songNameElem.text().trim();
 
-                // 2. 解析譜面類型 (Standard 或 DX)
                 let chartType: 'Standard' | 'DX' = 'DX';
                 const chartImg = $row.find('.music_kind_icon');
                 if (chartImg.length > 0 && chartImg.attr('src')?.includes('_standard')) {
                     chartType = 'Standard';
                 }
 
-                // 3. 解析達成率與 DX 分數
+                // 2.5 取得封面圖片 (這有助於後續畫圖)
+                const coverUrl = $row.find('img.music_img').attr('src') || '';
+
+                // 3. 解析分數
                 const scoreBlocks = $row.find('.music_score_block');
                 if (scoreBlocks.length < 2) return;
 
@@ -58,23 +60,22 @@ export class MaimaiScraper {
                 const [playerScoreStr] = dxScoreText.split('/');
                 const dxScore = parseInt(playerScoreStr.replace(/,/g, ''), 10) || 0;
 
-                // 4. 解析 FC / FS (Sync) 狀態圖示
                 let fc_status = '';
                 let fs_status = '';
                 
-                // 狀態圖示通常在右方靠右對齊的 img tag 中
+                // 從圖標 src 判定 fc/fs 狀態
                 const imgs = $row.find('img.f_r').toArray();
                 for (const img of imgs) {
                     const src = $(img).attr('src') || '';
-                    if (src.includes('music_icon_back')) continue; // 略過沒有狀態的空背板
+                    if (src.includes('music_icon_back')) continue; // 略過透明背景圖
                     
                     const match = src.match(/music_icon_(.+?)\.png/);
-                    if (match) {
-                        const status = match[1].toLowerCase();
-                        if (['fc', 'fcp', 'ap', 'app'].includes(status)) {
-                            fc_status = status;
-                        } else if (['fs', 'fsp', 'fsd', 'fsdp', 'fdx', 'fdxp'].includes(status)) {
-                            fs_status = status;
+                    if (match && match[1]) {
+                        const icon = match[1]; 
+                        if (icon.startsWith('fc') || icon.startsWith('ap')) {
+                            fc_status = icon;
+                        } else if (icon.startsWith('fs')) {
+                            fs_status = icon;
                         }
                     }
                 }
@@ -86,7 +87,8 @@ export class MaimaiScraper {
                     achievements,
                     dx_score: dxScore,
                     fc_status,
-                    fs_status
+                    fs_status,
+                    cover_url: coverUrl
                 });
             });
         }

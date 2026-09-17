@@ -49,3 +49,6 @@ CREATE TABLE IF NOT EXISTS score_history (
 -- 建立索引 (Indexes) 以加速成長曲線查詢
 CREATE INDEX IF NOT EXISTS idx_score_history_lookup 
 ON score_history(discord_id, song_name, chart_type, difficulty, recorded_at);
+
+-- 4. 歌曲封面快取表
+CREATE TABLE IF NOT EXISTS song_covers (song_name TEXT PRIMARY KEY, cover_url TEXT NOT NULL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);

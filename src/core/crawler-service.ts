@@ -133,6 +133,9 @@ export async function runCrawlerForUser(discordId: string) {
     const result = processScrapedScores(discordId, scores);
     console.log(`[CrawlerService] 比對與寫入完成！首次遊玩新增: ${result.newRecordsCount} 筆，達成率突破: ${result.improvedRecordsCount} 筆。`);
     
+    // 6. 抓取使用者的收藏品資料 (稱號、名牌、底板)
+    await fetchUserCollections(discordId, auth);
+
     return {
         playerName,
         rating,
@@ -140,4 +143,46 @@ export async function runCrawlerForUser(discordId: string) {
         newRecordsCount: result.newRecordsCount,
         improvedRecordsCount: result.improvedRecordsCount
     };
+}
+
+export async function fetchUserCollections(discordId: string, authClient: MaimaiAuthClient) {
+    try {
+        console.log(`[CrawlerService] 開始抓取玩家 ${discordId} 的收藏品資料...`);
+        
+        // 抓取稱號
+        const resTrophy = await authClient.client.get('https://maimaidx-eng.com/maimai-mobile/collection/trophy/');
+        const $t = cheerio.load(resTrophy.data);
+        const titles: {name: string, type: string}[] = [];
+        $t('.collection_trophy_block').each((_, el) => {
+            const titleName = $t(el).find('.trophy_inner_block').text().trim();
+            const typeClass = $t(el).attr('class')?.match(/trophy_([A-Za-z]+)/)?.[1] || 'Normal';
+            if (titleName) titles.push({ name: titleName, type: typeClass });
+        });
+
+        // 抓取名牌
+        const resPlate = await authClient.client.get('https://maimaidx-eng.com/maimai-mobile/collection/nameplate/');
+        const $p = cheerio.load(resPlate.data);
+        const plates: string[] = [];
+        $p('img[src*="/img/NamePlate/"]').each((_, el) => {
+            const src = $p(el).attr('src');
+            if (src) plates.push(src);
+        });
+
+        // 抓取底板
+        const resFrame = await authClient.client.get('https://maimaidx-eng.com/maimai-mobile/collection/frame/');
+        const $f = cheerio.load(resFrame.data);
+        const frames: string[] = [];
+        $f('img[src*="/img/Frame/"]').each((_, el) => {
+            const src = $f(el).attr('src');
+            if (src) frames.push(src);
+        });
+
+        // 儲存至資料庫
+        const { updateUserCollections } = await import('../db/repository.js');
+        updateUserCollections(discordId, titles, plates, frames);
+        
+        console.log(`[CrawlerService] 成功抓取收藏品: ${titles.length} 個稱號, ${plates.length} 個名牌, ${frames.length} 個底板。`);
+    } catch (e: any) {
+        console.error(`[CrawlerService] 抓取收藏品失敗: ${e.message}`);
+    }
 }

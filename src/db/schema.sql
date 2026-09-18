@@ -8,8 +8,11 @@ CREATE TABLE IF NOT EXISTS users (
     sega_password TEXT,           -- 改為非必填
     cookie TEXT,                  -- 存放有效的登入 Session Cookie，避免頻繁登入
     lxns_token TEXT,              -- 水魚查分器 Developer Token
-    player_name TEXT,             -- 遊戲內玩家暱稱
-    rating INTEGER DEFAULT 0,     -- 玩家當前 DX Rating
+    player_name TEXT,             -- 遊戲內玩家名稱
+    rating INTEGER DEFAULT 0,     -- 玩家目前的 DX Rating
+    current_title TEXT,
+    current_plate TEXT,
+    current_frame TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -52,3 +55,34 @@ ON score_history(discord_id, song_name, chart_type, difficulty, recorded_at);
 
 -- 4. 歌曲封面快取表
 CREATE TABLE IF NOT EXISTS song_covers (song_name TEXT PRIMARY KEY, cover_url TEXT NOT NULL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+
+-- 5. 使用者稱號庫 (Titles)
+CREATE TABLE IF NOT EXISTS user_titles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    title_name TEXT NOT NULL,
+    title_type TEXT, -- e.g., Normal, Bronze, Silver, Gold, Rainbow
+    FOREIGN KEY(discord_id) REFERENCES users(discord_id) ON DELETE CASCADE,
+    UNIQUE(discord_id, title_name)
+);
+
+-- 6. 使用者名牌版庫 (Plates)
+CREATE TABLE IF NOT EXISTS user_plates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    plate_name TEXT NOT NULL,
+    plate_url TEXT NOT NULL,
+    FOREIGN KEY(discord_id) REFERENCES users(discord_id) ON DELETE CASCADE,
+    UNIQUE(discord_id, plate_name)
+);
+
+-- 7. 使用者底板庫 (Frames)
+CREATE TABLE IF NOT EXISTS user_frames (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    frame_name TEXT NOT NULL,
+    frame_url TEXT NOT NULL,
+    FOREIGN KEY(discord_id) REFERENCES users(discord_id) ON DELETE CASCADE,
+    UNIQUE(discord_id, frame_name)
+);
+

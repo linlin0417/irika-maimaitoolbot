@@ -130,3 +130,33 @@ export const processScrapedScores: any = db.transaction((discordId: string, scor
 
     return { newRecordsCount, improvedRecordsCount };
 });
+
+export function updateUserCollections(discordId: string, titles: { name: string, type: string }[], plates: string[], frames: string[]) {
+    const insertTitle = db.prepare('INSERT INTO user_titles (discord_id, title_name, title_type) VALUES (?, ?, ?) ON CONFLICT(discord_id, title_name) DO UPDATE SET title_type = excluded.title_type');
+    const insertPlate = db.prepare('INSERT INTO user_plates (discord_id, plate_name, plate_url) VALUES (?, ?, ?) ON CONFLICT(discord_id, plate_name) DO UPDATE SET plate_url = excluded.plate_url');
+    const insertFrame = db.prepare('INSERT INTO user_frames (discord_id, frame_name, frame_url) VALUES (?, ?, ?) ON CONFLICT(discord_id, frame_name) DO UPDATE SET frame_url = excluded.frame_url');
+    
+    db.transaction(() => {
+        for (const t of titles) insertTitle.run(discordId, t.name, t.type);
+        for (const p of plates) insertPlate.run(discordId, p.split('/').pop() || p, p);
+        for (const f of frames) insertFrame.run(discordId, f.split('/').pop() || f, f);
+    })();
+}
+
+export function getUserCollections(discordId: string) {
+    const titles = db.prepare('SELECT title_name, title_type FROM user_titles WHERE discord_id = ?').all(discordId) as any[];
+    const plates = db.prepare('SELECT plate_name, plate_url FROM user_plates WHERE discord_id = ?').all(discordId) as any[];
+    const frames = db.prepare('SELECT frame_name, frame_url FROM user_frames WHERE discord_id = ?').all(discordId) as any[];
+    return { titles, plates, frames };
+}
+
+export function updateUserEquipment(discordId: string, type: 'title' | 'plate' | 'frame', value: string) {
+    const validTypes = {
+        title: 'current_title',
+        plate: 'current_plate',
+        frame: 'current_frame'
+    };
+    const col = validTypes[type];
+    if (!col) return;
+    db.prepare(`UPDATE users SET ${col} = ? WHERE discord_id = ?`).run(value, discordId);
+}

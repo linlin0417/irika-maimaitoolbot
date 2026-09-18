@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "node scripts/setup.js",
-    "postinstall": "npm run setup",
+    "postinstall": "npm run setup && npx patch-package",
     "update": "git pull && npm install",
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts"

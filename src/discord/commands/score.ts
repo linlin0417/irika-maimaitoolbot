@@ -89,15 +89,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // 計算 Rating 與 Rank
     const songDb = SongDatabase.getInstance();
-    const diffIndex = diffIndices[difficulty];
+    const diffIndex = diffIndices[difficulty] as number;
     let constant = songDb.getConstant(songName, record.chart_type, diffIndex);
 
-    if (constant === null) {
+    if (constant == null) {
         constant = 0;
     }
 
     const rank = getRank(record.achievements);
-    const rating = calculateRating(constant, record.achievements);
+    const rating = calculateRating(constant || 0, record.achievements);
 
     const outputPath = path.resolve(process.cwd(), `data/score_${discordId}_${Date.now()}.png`);
 

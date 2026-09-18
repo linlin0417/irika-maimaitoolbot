@@ -1,42 +1,53 @@
 import cron from 'node-cron';
-import db from '../db/index';
-import { runCrawlerForUser } from './crawler-service';
-import { SongDatabase } from './song-db';
+import db from '../db/index.js';
+import { runCrawlerForUser } from './crawler-service.js';
+import { SongDatabase } from './song-db.js';
+import type { Client } from 'discord.js';
 
-export function startScheduler() {
+export function startScheduler(client?: Client) {
     console.log('====================================');
-    console.log('    [Scheduler] 啟動排程管理器       ');
+    console.log('    [Scheduler] 背景排程系統啟動       ');
     console.log('====================================');
 
     const songDb = SongDatabase.getInstance();
 
-    // 每天 04:00 AM (伺服器維護期間) 執行曲庫定數同步
+    // 每天 04:00 AM (伺服器維護後) 進行歌曲資料庫同步
     cron.schedule('0 4 * * *', async () => {
-        console.log('[Scheduler] 觸發每日曲庫同步任務');
+        console.log('[Scheduler] 執行每日歌曲庫同步...');
         await songDb.syncFromServer();
     });
 
-    // 核心爬蟲任務：逐一對所有已註冊玩家進行成績同步
+    // 定義自動爬蟲任務
     const crawlAllUsers = async () => {
-        // 從資料庫抓出所有已經成功綁定過 SEGA ID 的玩家
         const users = db.prepare('SELECT discord_id FROM users WHERE sega_id IS NOT NULL AND sega_password IS NOT NULL').all() as { discord_id: string }[];
         
-        console.log(`\n[Scheduler] 準備對 ${users.length} 名玩家執行批次成績爬蟲...`);
+        console.log(`\n[Scheduler] 準備對 ${users.length} 位玩家進行自動更新...`);
         
         for (const user of users) {
             try {
-                await runCrawlerForUser(user.discord_id);
+                const result = await runCrawlerForUser(user.discord_id);
                 
-                // 【安全機制】隨機延遲 5 ~ 15 秒，避免瞬間併發請求被 SEGA 視為 DDoS 而遭到封鎖 (Rate Limit)
+                // 只有在有新成績，且有傳入 client 的情況下，才發送 Discord 私訊通知
+                if (result && client && (result.newRecordsCount > 0 || result.improvedRecordsCount > 0)) {
+                    try {
+                        const dcUser = await client.users.fetch(user.discord_id);
+                        await dcUser.send(`🤖 **背景自動更新完成！**\n嗨 ${result.playerName}，系統剛剛自動幫您同步了成績！\n✨ 新增了 **${result.newRecordsCount}** 筆成績\n📈 達成率突破 **${result.improvedRecordsCount}** 筆\n快使用 \`/b50\` 看看最新海報吧！`);
+                        console.log(`[Scheduler] 已發送更新通知給玩家 ${user.discord_id}`);
+                    } catch (dmErr: any) {
+                        console.warn(`[Scheduler] 無法私訊玩家 ${user.discord_id}: ${dmErr.message}`);
+                    }
+                }
+                
+                // 隨機等待 5 ~ 15 秒，避免觸發 SEGA 的 Rate Limit
                 const delay = Math.floor(Math.random() * 10000) + 5000;
-                console.log(`[Scheduler] 暫停 ${delay / 1000} 秒後處理下一位玩家...`);
+                console.log(`[Scheduler] 隨機等待 ${delay / 1000} 秒後繼續...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             } catch (e: any) {
-                console.error(`[Scheduler] 玩家 ${user.discord_id} 同步失敗:`, e.message);
+                console.error(`[Scheduler] 玩家 ${user.discord_id} 自動更新失敗:`, e.message);
             }
         }
         
-        console.log('[Scheduler] 批次爬蟲任務執行完畢。');
+        console.log('[Scheduler] 本次批次自動更新完成。');
     };
 
     // 依照專案需求：每 3 小時動態觸發一次

@@ -84,15 +84,13 @@ export class SongDatabase {
 
         let constant = 0;
         
-        // 優先讀取國際版 (intl) 的覆寫定數
         if (song.regionOverrides && song.regionOverrides.intl && song.regionOverrides.intl.lv) {
-            constant = song.regionOverrides.intl.lv[diffIndex];
+            constant = song.regionOverrides.intl.lv[diffIndex] as number;
         } else {
-            constant = song.lv[diffIndex];
+            constant = song.lv[diffIndex] as number;
         }
 
-        // 若定數為 0，通常代表國際版已經刪除該譜面或該難度不存在
-        if (constant === 0 || constant === undefined) {
+        if (!constant || constant === 0) {
             return null;
         }
 

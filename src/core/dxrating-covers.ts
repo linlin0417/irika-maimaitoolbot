@@ -6,6 +6,7 @@ export interface DxDataSong {
     title: string;
     imageName: string;
     searchAcronyms?: string[];
+    isNew?: boolean;
 }
 
 export class DxRatingCoverProvider {
@@ -68,6 +69,15 @@ export class DxRatingCoverProvider {
         const normalized = this.normalizeName(songName);
         const song = this.songMap.get(normalized);
         return song ? song.title : songName; // 如果找不到，退回原輸入
+    }
+
+    /**
+     * 判斷是否為最新版本曲目 (用於 B50 計算，新版本取 Top 15，舊版本取 Top 35)
+     */
+    public isNewSong(songName: string): boolean {
+        const normalized = this.normalizeName(songName);
+        const song = this.songMap.get(normalized);
+        return song ? !!song.isNew : false;
     }
 
     /**

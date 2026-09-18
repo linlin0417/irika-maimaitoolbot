@@ -151,5 +151,6 @@ export async function startDiscordBot() {
         }
     }
 
-    client.login(process.env.DISCORD_TOKEN);
+    await client.login(process.env.DISCORD_TOKEN);
+    return client;
 }

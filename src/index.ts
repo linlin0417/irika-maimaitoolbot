@@ -15,11 +15,11 @@ async function bootstrap() {
     // 0. 初始化外部曲繪庫 (gekichumai/dxdata)
     await DxRatingCoverProvider.getInstance().init();
 
-    // 1. 啟動排程管理器 (定時同步與爬蟲)
-    startScheduler();
+    // 1. 啟動 Discord 機器人並取得 client 實例
+    const client = await startDiscordBot();
 
-    // 2. 啟動 Discord 機器人
-    startDiscordBot();
+    // 2. 啟動背景排程 (傳入 client 供私訊通知使用)
+    startScheduler(client);
 }
 
 bootstrap();

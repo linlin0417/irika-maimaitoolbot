@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import type { Database as BetterSqlite3Database } from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,7 +15,7 @@ if (!fs.existsSync(dataDir)) {
 }
 
 const dbPath = path.join(dataDir, 'maimai.db');
-const db = new Database(dbPath, {
+const db: BetterSqlite3Database = new Database(dbPath, {
     // 開啟預寫式日誌 (WAL) 模式，大幅提升 SQLite 讀寫併發效能
 });
 

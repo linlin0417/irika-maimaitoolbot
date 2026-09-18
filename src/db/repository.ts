@@ -50,7 +50,7 @@ export function updateUserSession(discordId: string, cookie: string, playerName:
 // ==========================================
 
 // 運用 SQLite Transaction 保證大批次更新的效能與資料原子性
-export const processScrapedScores = db.transaction((discordId: string, scores: ScrapedScore[]) => {
+export const processScrapedScores: any = db.transaction((discordId: string, scores: ScrapedScore[]) => {
     const getScoreStmt = db.prepare(`
         SELECT achievements, dx_score 
         FROM scores 

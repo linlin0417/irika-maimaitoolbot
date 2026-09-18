@@ -79,9 +79,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (records.length < 2) {
-        let msg = `這首歌曲目前只有一筆歷史紀錄 (${records[0].achievements}%)，無法繪製成長曲線。多打幾次再來吧！`;
-        if (isDebug) {
-            msg += `\n\n**[Debug 診斷資訊]**\n- 僅有一筆資料: \`${JSON.stringify(records[0])}\``;
+        let msg = `此曲目前只有一筆或沒有歷史成績，無法產生折線圖。`;
+        if (records.length === 1 && records[0]) {
+            msg = `此曲目前只有一筆歷史成績 (${records[0].achievements}%)，無法產生折線圖。等下次進步後再來吧！`;
+            if (isDebug) {
+                msg += `\n\n**[Debug 資訊]**\n- 現有成績: \`${JSON.stringify(records[0])}\``;
+            }
         }
         await interaction.editReply(msg);
         return;

@@ -29,3 +29,6 @@ Thumbs.db
 # Configuration files
 cfg/*.cfg
 !cfg/*.cfg.example
+
+# Test outputs
+tests/output/

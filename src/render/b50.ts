@@ -5,6 +5,7 @@ import { SongDatabase } from '../core/song-db.js';
 import { DxRatingCoverProvider } from '../core/dxrating-covers.js';
 import { calculateRating, getRank } from '../core/rating.js';
 import fs from 'fs';
+import path from 'path';
 
 export class B50Renderer {
     /**
@@ -96,7 +97,7 @@ export class B50Renderer {
             const originalTitle = coverProvider.getOriginalTitle(s.rawScore.song_name);
             const coverDataUri = await coverProvider.getCoverDataUri(s.rawScore.song_name);
 
-            charts.push({
+            const chartItem: any = {
                 id: 0,
                 song_name: originalTitle,
                 level: s.levelString,
@@ -107,9 +108,12 @@ export class B50Renderer {
                 rate: s.rateType as any,
                 fc: s.rawScore.fc_status || null,
                 fs: s.rawScore.fs_status || null,
-                dx_rating: s.rating,
-                coverDataUri
-            });
+                dx_rating: s.rating
+            };
+            if (coverDataUri) {
+                chartItem.coverDataUri = coverDataUri;
+            }
+            charts.push(chartItem);
         }
 
         // 3. 計算統計資料
@@ -140,47 +144,78 @@ export class B50Renderer {
         console.log(`[DEBUG B50] 準備獲取玩家頭像，URL: ${avatarUrl}`);
         if (avatarUrl) {
             try {
-                // 準備 Headers (如果有 SEGA Cookie 則帶上，以讀取自訂相片)
-                const fetchHeaders: Record<string, string> = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                };
-                if (userCookie && avatarUrl.includes('maimaidx-eng.com')) {
-                    fetchHeaders['Cookie'] = `userId=${userCookie}`;
+                const iconsDir = path.resolve(process.cwd(), 'data/icons');
+                
+                // 優先檢查是否有本地快取（手動設定 > 自動爬取）
+                const possiblePaths = [
+                    path.join(iconsDir, `${discordId}_ManualIcon.jpg`),
+                    path.join(iconsDir, `${discordId}_ManualIcon.png`),
+                    path.join(iconsDir, `${discordId}_UserIcon.jpg`),
+                    path.join(iconsDir, `${discordId}_UserIcon.png`)
+                ];
+                
+                let foundCache = false;
+                for (const p of possiblePaths) {
+                    if (fs.existsSync(p)) {
+                        const imgBuffer = fs.readFileSync(p);
+                        console.log(`[DEBUG B50] 找到本地頭像快取: ${p} (${imgBuffer.byteLength} bytes)`);
+                        const ext = path.extname(p).toLowerCase();
+                        const mimeType = ext === '.jpg' ? 'image/jpeg' : 'image/png';
+                        iconDataUri = `data:${mimeType};base64,${imgBuffer.toString('base64')}`;
+                        foundCache = true;
+                        break;
+                    }
                 }
 
-                const res = await fetch(avatarUrl, { headers: fetchHeaders });
-                
-                console.log(`[DEBUG B50] 頭像伺服器回應狀態碼: ${res.status}`);
-                if (!res.ok) {
-                    console.warn(`[B50] 頭像下載失敗，HTTP 狀態碼: ${res.status}`);
-                } else {
-                    const arrayBuffer = await res.arrayBuffer();
-                    const base64 = Buffer.from(arrayBuffer).toString('base64');
-                    const mimeType = res.headers.get('content-type') || 'image/png';
-                    console.log(`[DEBUG B50] 頭像下載成功，大小: ${arrayBuffer.byteLength} bytes, 類型: ${mimeType}`);
+                if (!foundCache) {
+                    console.log(`[DEBUG B50] 無本地快取，嘗試網路下載...`);
+                    const fetchHeaders: Record<string, string> = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    };
+                    if (userCookie && avatarUrl.includes('maimaidx-eng.com')) {
+                        fetchHeaders['Cookie'] = userCookie;
+                    }
+
+                    const res = await fetch(avatarUrl, { headers: fetchHeaders });
+                    console.log(`[DEBUG B50] 網路下載狀態碼: ${res.status}`);
                     
-                    // 確保是真的圖片而不是 HTML
-                    if (mimeType.includes('image')) {
-                        iconDataUri = `data:${mimeType};base64,${base64}`;
+                    if (!res.ok) {
+                        console.warn(`[DEBUG B50] 頭像下載失敗，HTTP 狀態碼: ${res.status}`);
                     } else {
-                        console.warn(`[DEBUG B50] 警告：下載到的頭像似乎不是圖片 (${mimeType})`);
+                        const arrayBuffer = await res.arrayBuffer();
+                        console.log(`[DEBUG B50] 下載大小: ${arrayBuffer.byteLength} bytes`);
+                        if (arrayBuffer.byteLength < 100) {
+                            console.warn(`[DEBUG B50] 圖片太小 (${arrayBuffer.byteLength} bytes)，捨棄`);
+                        } else {
+                            const base64 = Buffer.from(arrayBuffer).toString('base64');
+                            const mimeType = res.headers.get('content-type') || 'image/png';
+                            if (mimeType.includes('image')) {
+                                iconDataUri = `data:${mimeType};base64,${base64}`;
+                                console.log(`[DEBUG B50] 網路下載成功，類型: ${mimeType}`);
+                            } else {
+                                console.warn(`[DEBUG B50] 非圖片內容: ${mimeType}`);
+                            }
+                        }
                     }
                 }
             } catch (e: any) {
-                console.warn(`[DEBUG B50] 無法獲取玩家頭像: ${e.message}`);
+                console.warn(`[DEBUG B50] 獲取玩家頭像失敗: ${e.message}`);
             }
         }
+        console.log(`[DEBUG B50] 最終頭像狀態: ${iconDataUri ? '有頭像 (' + iconDataUri.substring(0, 30) + '...)' : '無頭像'}`);
 
         const posterData: PosterData = {
             player: {
                 name: playerName,
-                rating: b50Total,
-                icon: iconDataUri
+                rating: b50Total
             },
             summary,
             charts: charts,
-            radar: [] // 繞過 database.getChartTags()
+            radar: [] // TODO: database.getChartTags()
         };
+        if (iconDataUri) {
+            posterData.player.avatarDataUri = iconDataUri;
+        }
 
         // 4. 呼叫 mai-kit 生成海報
         const draw = new Draw({ database: {} as any });

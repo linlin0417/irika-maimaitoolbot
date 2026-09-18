@@ -58,7 +58,7 @@ export class MaimaiScraper {
                 // DX 分數格式通常為 "1,234 / 2,500"，我們只需要玩家分數
                 const dxScoreText = $(scoreBlocks[1]).text().trim();
                 const [playerScoreStr] = dxScoreText.split('/');
-                const dxScore = parseInt(playerScoreStr.replace(/,/g, ''), 10) || 0;
+                const dxScore = playerScoreStr ? parseInt(playerScoreStr.replace(/,/g, ''), 10) || 0 : 0;
 
                 let fc_status = '';
                 let fs_status = '';
@@ -83,7 +83,7 @@ export class MaimaiScraper {
                 allScores.push({
                     song_name: songName,
                     chart_type: chartType,
-                    difficulty: diffName,
+                    difficulty: diffName as any,
                     achievements,
                     dx_score: dxScore,
                     fc_status,

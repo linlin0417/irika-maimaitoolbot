@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, ChatInputCommandInteraction, AttachmentBuilder } from 'discord.js';
 import db from '../../db/index.js';
 import { SongDatabase } from '../../core/song-db.js';
 import { DxRatingCoverProvider } from '../../core/dxrating-covers.js';
@@ -13,7 +13,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const discordId = interaction.user.id;
 
     try {
-        const user = db.prepare('SELECT sega_id, updated_at, icon_url FROM users WHERE discord_id = ?').get(discordId) as any;
+        const user = db.prepare('SELECT sega_id, updated_at, icon_url, cookie FROM users WHERE discord_id = ?').get(discordId) as any;
         if (!user) {
             await interaction.editReply('[錯誤] 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
             return;
@@ -76,10 +76,32 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const oldTotal = oldSongs.slice(0, 35).reduce((sum, s) => sum + s.rating, 0);
         const b50Total = newTotal + oldTotal;
 
+        // 處理 Maimai 官方頭像 (因為需要帶上 Cookie 才能下載)
+        let avatarUrl = user.icon_url || interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
+        let attachment: AttachmentBuilder | null = null;
+        
+        if (user.icon_url && user.icon_url.includes('maimaidx-eng.com')) {
+            try {
+                const fetchHeaders: Record<string, string> = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                };
+                if (user.cookie) fetchHeaders['Cookie'] = `userId=${user.cookie}`;
+                
+                const res = await fetch(user.icon_url, { headers: fetchHeaders });
+                if (res.ok) {
+                    const arrayBuffer = await res.arrayBuffer();
+                    attachment = new AttachmentBuilder(Buffer.from(arrayBuffer), { name: 'avatar.png' });
+                    avatarUrl = 'attachment://avatar.png';
+                }
+            } catch (e) {
+                console.warn('[Profile] 無法獲取官方頭像:', e);
+            }
+        }
+
         const embed = new EmbedBuilder()
             .setColor('#00E1D9')
             .setTitle(`[ ${interaction.user.username} 的 Maimai DX 玩家名片 ]`)
-            .setThumbnail(user.icon_url || interaction.user.displayAvatarURL())
+            .setThumbnail(avatarUrl)
             .addFields(
                 { name: '綜合 Rating (B50)', value: `**${b50Total}**\n(新曲: ${newTotal} / 舊曲: ${oldTotal})`, inline: false },
                 { name: '遊玩總譜面數', value: `${scores.length} 首`, inline: true },
@@ -92,7 +114,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             .setFooter({ text: 'Powered by Irika-MaimaiToolBot' })
             .setTimestamp();
 
-        await interaction.editReply({ embeds: [embed] });
+        const replyPayload: any = { embeds: [embed] };
+        if (attachment) {
+            replyPayload.files = [attachment];
+        }
+
+        await interaction.editReply(replyPayload);
 
     } catch (e: any) {
         console.error('[Discord] 產生 Profile 失敗:', e);

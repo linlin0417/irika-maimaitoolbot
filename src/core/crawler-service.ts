@@ -47,14 +47,14 @@ export async function runCrawlerForUser(discordId: string) {
         let scrapedIcon = $('img.w_112.f_l').attr('src') || $('.basic_block img').first().attr('src');
         console.log(`[DEBUG Crawler] 原始解析到的 Icon URL: ${scrapedIcon}`);
         
-        // 檢查 Icon URL 是否有效 (SEGA 預設可能會回傳壞掉的路徑像是 '.../img/Icon/')
-        if (!scrapedIcon || scrapedIcon.endsWith('/Icon/') || scrapedIcon.endsWith('/Icon')) {
+        // 如果連 Icon 都沒找到，才降級尋找搭檔角色 (Chara)
+        if (!scrapedIcon) {
             console.log(`[DEBUG Crawler] 偵測到無效 Icon，準備降級尋找搭檔角色 (Chara)`);
             scrapedIcon = $('img[src*="Chara"]').attr('src');
             console.log(`[DEBUG Crawler] 找到的搭檔角色 URL: ${scrapedIcon}`);
         }
 
-        if (scrapedIcon && !scrapedIcon.endsWith('/Icon/') && !scrapedIcon.endsWith('/Icon')) {
+        if (scrapedIcon) {
             if (scrapedIcon.startsWith('http')) {
                 iconUrl = scrapedIcon;
             } else {

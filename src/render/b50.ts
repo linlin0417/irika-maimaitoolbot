@@ -13,7 +13,7 @@ export class B50Renderer {
      * @param playerName 玩家暱稱 (展示用)
      * @param outputPath 輸出圖片的路徑
      */
-    public static async renderB50Poster(discordId: string, playerName: string, avatarUrl: string | null, outputPath: string): Promise<void> {
+    public static async renderB50Poster(discordId: string, playerName: string, avatarUrl: string | null, userCookie: string | null, outputPath: string): Promise<void> {
         // 1. 從資料庫抓出所有成績
         const scores = db.prepare(`
             SELECT song_name, chart_type, difficulty, achievements, dx_score, fc_status, fs_status
@@ -140,10 +140,15 @@ export class B50Renderer {
         console.log(`[DEBUG B50] 準備獲取玩家頭像，URL: ${avatarUrl}`);
         if (avatarUrl) {
             try {
-                // 使用自訂 User-Agent 避免被阻擋
-                const res = await fetch(avatarUrl, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-                });
+                // 準備 Headers (如果有 SEGA Cookie 則帶上，以讀取自訂相片)
+                const fetchHeaders: Record<string, string> = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                };
+                if (userCookie && avatarUrl.includes('maimaidx-eng.com')) {
+                    fetchHeaders['Cookie'] = `userId=${userCookie}`;
+                }
+
+                const res = await fetch(avatarUrl, { headers: fetchHeaders });
                 
                 console.log(`[DEBUG B50] 頭像伺服器回應狀態碼: ${res.status}`);
                 if (!res.ok) {

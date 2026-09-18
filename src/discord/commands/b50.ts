@@ -15,7 +15,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
         // 確保玩家已經綁定帳號且有資料
-        const user = db.prepare('SELECT sega_id, icon_url FROM users WHERE discord_id = ?').get(discordId) as any;
+        const user = db.prepare('SELECT sega_id, icon_url, cookie FROM users WHERE discord_id = ?').get(discordId) as any;
         if (!user) {
             await interaction.editReply('[錯誤] 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
             return;
@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         console.log(`[DEBUG B50 Command] 最終選擇傳遞給海報的頭像網址: ${avatarUrl}`);
 
         // 渲染海報
-        await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, outputPath);
+        await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, user.cookie || null, outputPath);
         
         // 傳送圖片
         const attachment = new AttachmentBuilder(outputPath);

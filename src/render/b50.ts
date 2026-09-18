@@ -13,7 +13,7 @@ export class B50Renderer {
      * @param playerName 玩家暱稱 (展示用)
      * @param outputPath 輸出圖片的路徑
      */
-    public static async renderB50Poster(discordId: string, playerName: string, outputPath: string): Promise<void> {
+    public static async renderB50Poster(discordId: string, playerName: string, avatarUrl: string | null, outputPath: string): Promise<void> {
         // 1. 從資料庫抓出所有成績
         const scores = db.prepare(`
             SELECT song_name, chart_type, difficulty, achievements, dx_score, fc_status, fs_status
@@ -135,11 +135,26 @@ export class B50Renderer {
             totalCharts: allB50.length
         };
 
+        // 獲取頭像 Base64
+        let iconDataUri: string | undefined = undefined;
+        if (avatarUrl) {
+            try {
+                // Node 18+ 原生 fetch
+                const res = await fetch(avatarUrl);
+                const arrayBuffer = await res.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString('base64');
+                const mimeType = res.headers.get('content-type') || 'image/png';
+                iconDataUri = `data:${mimeType};base64,${base64}`;
+            } catch (e) {
+                console.warn('[B50] 無法獲取玩家頭像', e);
+            }
+        }
+
         const posterData: PosterData = {
             player: {
                 name: playerName,
                 rating: b50Total,
-                // 可以根據需求加入 course_rank 等
+                icon: iconDataUri
             },
             summary,
             charts: charts,

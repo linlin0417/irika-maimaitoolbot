@@ -27,8 +27,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
 
+        const avatarUrl = interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
+
         // 渲染海報
-        await B50Renderer.renderB50Poster(discordId, interaction.user.username, outputPath);
+        await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, outputPath);
         
         // 傳送圖片
         const attachment = new AttachmentBuilder(outputPath);

@@ -44,13 +44,22 @@ export async function runCrawlerForUser(discordId: string) {
             rating = parseInt(ratingStr, 10);
         }
 
-        const scrapedIcon = $('img.w_112.f_l').attr('src') || $('.basic_block img').first().attr('src');
-        if (scrapedIcon) {
+        let scrapedIcon = $('img.w_112.f_l').attr('src') || $('.basic_block img').first().attr('src');
+        
+        // 檢查 Icon URL 是否有效 (SEGA 預設可能會回傳壞掉的路徑像是 '.../img/Icon/')
+        if (!scrapedIcon || scrapedIcon.endsWith('/Icon/') || scrapedIcon.endsWith('/Icon')) {
+            // 如果頭像壞掉，降級使用玩家的搭檔角色 (Chara)
+            scrapedIcon = $('img[src*="Chara"]').attr('src');
+        }
+
+        if (scrapedIcon && !scrapedIcon.endsWith('/Icon/') && !scrapedIcon.endsWith('/Icon')) {
             if (scrapedIcon.startsWith('http')) {
                 iconUrl = scrapedIcon;
             } else {
                 iconUrl = new URL(scrapedIcon, 'https://maimaidx-eng.com/maimai-mobile/').href;
             }
+        } else {
+            iconUrl = null;
         }
     } catch (e: any) {
         console.warn(`[CrawlerService] 無法更新首頁資訊: ${e.message}`);

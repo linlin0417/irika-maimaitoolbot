@@ -154,7 +154,7 @@ export class B50Renderer {
             player: {
                 name: playerName,
                 rating: b50Total,
-                icon: iconDataUri
+                avatarDataUri: iconDataUri
             },
             summary,
             charts: charts,

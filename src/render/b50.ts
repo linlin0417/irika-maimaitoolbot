@@ -137,16 +137,32 @@ export class B50Renderer {
 
         // 獲取頭像 Base64
         let iconDataUri: string | undefined = undefined;
+        console.log(`[DEBUG B50] 準備獲取玩家頭像，URL: ${avatarUrl}`);
         if (avatarUrl) {
             try {
-                // Node 18+ 原生 fetch
-                const res = await fetch(avatarUrl);
-                const arrayBuffer = await res.arrayBuffer();
-                const base64 = Buffer.from(arrayBuffer).toString('base64');
-                const mimeType = res.headers.get('content-type') || 'image/png';
-                iconDataUri = `data:${mimeType};base64,${base64}`;
-            } catch (e) {
-                console.warn('[B50] 無法獲取玩家頭像', e);
+                // 使用自訂 User-Agent 避免被阻擋
+                const res = await fetch(avatarUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+                });
+                
+                console.log(`[DEBUG B50] 頭像伺服器回應狀態碼: ${res.status}`);
+                if (!res.ok) {
+                    console.warn(`[B50] 頭像下載失敗，HTTP 狀態碼: ${res.status}`);
+                } else {
+                    const arrayBuffer = await res.arrayBuffer();
+                    const base64 = Buffer.from(arrayBuffer).toString('base64');
+                    const mimeType = res.headers.get('content-type') || 'image/png';
+                    console.log(`[DEBUG B50] 頭像下載成功，大小: ${arrayBuffer.byteLength} bytes, 類型: ${mimeType}`);
+                    
+                    // 確保是真的圖片而不是 HTML
+                    if (mimeType.includes('image')) {
+                        iconDataUri = `data:${mimeType};base64,${base64}`;
+                    } else {
+                        console.warn(`[DEBUG B50] 警告：下載到的頭像似乎不是圖片 (${mimeType})`);
+                    }
+                }
+            } catch (e: any) {
+                console.warn(`[DEBUG B50] 無法獲取玩家頭像: ${e.message}`);
             }
         }
 
@@ -154,7 +170,7 @@ export class B50Renderer {
             player: {
                 name: playerName,
                 rating: b50Total,
-                avatarDataUri: iconDataUri
+                icon: iconDataUri
             },
             summary,
             charts: charts,

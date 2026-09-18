@@ -45,11 +45,13 @@ export async function runCrawlerForUser(discordId: string) {
         }
 
         let scrapedIcon = $('img.w_112.f_l').attr('src') || $('.basic_block img').first().attr('src');
+        console.log(`[DEBUG Crawler] 原始解析到的 Icon URL: ${scrapedIcon}`);
         
         // 檢查 Icon URL 是否有效 (SEGA 預設可能會回傳壞掉的路徑像是 '.../img/Icon/')
         if (!scrapedIcon || scrapedIcon.endsWith('/Icon/') || scrapedIcon.endsWith('/Icon')) {
-            // 如果頭像壞掉，降級使用玩家的搭檔角色 (Chara)
+            console.log(`[DEBUG Crawler] 偵測到無效 Icon，準備降級尋找搭檔角色 (Chara)`);
             scrapedIcon = $('img[src*="Chara"]').attr('src');
+            console.log(`[DEBUG Crawler] 找到的搭檔角色 URL: ${scrapedIcon}`);
         }
 
         if (scrapedIcon && !scrapedIcon.endsWith('/Icon/') && !scrapedIcon.endsWith('/Icon')) {
@@ -58,11 +60,13 @@ export async function runCrawlerForUser(discordId: string) {
             } else {
                 iconUrl = new URL(scrapedIcon, 'https://maimaidx-eng.com/maimai-mobile/').href;
             }
+            console.log(`[DEBUG Crawler] 最終決定的 Icon URL: ${iconUrl}`);
         } else {
             iconUrl = null;
+            console.log(`[DEBUG Crawler] 無法獲取任何有效的官方 Icon，設定為 null`);
         }
     } catch (e: any) {
-        console.warn(`[CrawlerService] 無法更新首頁資訊: ${e.message}`);
+        console.warn(`[DEBUG Crawler] 無法更新首頁資訊: ${e.message}`);
     }
 
     // 將最新的登入狀態與頭像寫回 DB

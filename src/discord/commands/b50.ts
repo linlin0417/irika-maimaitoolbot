@@ -29,6 +29,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         // 優先使用 Maimai 官方頭像，若無則降級為 Discord 頭像
         const avatarUrl = user.icon_url || interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
+        console.log(`[DEBUG B50 Command] 使用者資料庫中的 icon_url: ${user.icon_url}`);
+        console.log(`[DEBUG B50 Command] 最終選擇傳遞給海報的頭像網址: ${avatarUrl}`);
 
         // 渲染海報
         await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, outputPath);

@@ -33,9 +33,13 @@ export class B50Renderer {
         };
 
         const parsedScores: Array<{
-            scoreChart: ScoreChart;
+            rawScore: any;
             isNew: boolean;
             rating: number;
+            levelString: string;
+            diffIndex: number;
+            chartType: string;
+            rateType: string;
         }> = [];
 
         let apCount = 0;
@@ -44,44 +48,35 @@ export class B50Renderer {
 
         for (const score of scores) {
             try {
-                // 從 magic.json 找定數
-                const song = await songDb.getSong(score.song_name);
                 const diffIndex = diffMap[score.difficulty] ?? 3;
-                const sheetType = score.chart_type === 'DX' ? 'dx' : 'standard';
-                const sheet = song.difficulties[sheetType].find(d => d.difficulty === diffIndex);
-                if (!sheet) continue; // 找不到對應譜面 (理論上不會發生)
+                const chartType = score.chart_type as 'Standard' | 'DX';
+                
+                // 從 magic.json 找定數
+                const levelValue = songDb.getConstant(score.song_name, chartType, diffIndex);
+                if (!levelValue) continue;
 
-                const levelValue = sheet.level_value;
                 const rating = calculateRating(levelValue, score.achievements);
                 const rateType = getRank(score.achievements).toLowerCase().replace('+', 'p');
+                
+                // 推算等級字串
+                const intLv = Math.floor(levelValue);
+                const frac = levelValue - intLv;
+                const levelString = (intLv >= 7 && frac >= 0.7) ? `${intLv}+` : `${intLv}`;
 
                 // 統計
                 if (score.fc_status === 'app') appCount++;
                 if (score.fs_status === 'fsdp') fsdpCount++;
 
-                const originalTitle = coverProvider.getOriginalTitle(score.song_name);
-                const coverDataUri = await coverProvider.getCoverDataUri(score.song_name);
-
                 parsedScores.push({
+                    rawScore: score,
                     isNew: coverProvider.isNewSong(score.song_name),
                     rating,
-                    scoreChart: {
-                        id: song.id,
-                        song_name: originalTitle,
-                        level: sheet.level,
-                        level_index: diffIndex,
-                        type: sheetType,
-                        achievements: score.achievements,
-                        dx_score: score.dx_score,
-                        rate: rateType as any,
-                        fc: score.fc_status || null,
-                        fs: score.fs_status || null,
-                        dx_rating: rating,
-                        coverDataUri
-                    }
+                    levelString,
+                    diffIndex,
+                    chartType: chartType === 'DX' ? 'dx' : 'standard',
+                    rateType
                 });
             } catch (e) {
-                // 有些歌曲可能在 magic.json 找不到 (極少數例外)
                 continue;
             }
         }
@@ -93,17 +88,39 @@ export class B50Renderer {
         // 取 Top 15 新曲 & Top 35 舊曲
         const b15 = newSongs.slice(0, 15);
         const b35 = oldSongs.slice(0, 35);
+        const allB50 = [...b15, ...b35];
+
+        // 只為這 50 首獲取封面
+        const charts: ScoreChart[] = [];
+        for (const s of allB50) {
+            const originalTitle = coverProvider.getOriginalTitle(s.rawScore.song_name);
+            const coverDataUri = await coverProvider.getCoverDataUri(s.rawScore.song_name);
+
+            charts.push({
+                id: 0,
+                song_name: originalTitle,
+                level: s.levelString,
+                level_index: s.diffIndex,
+                type: s.chartType as any,
+                achievements: s.rawScore.achievements,
+                dx_score: s.rawScore.dx_score,
+                rate: s.rateType as any,
+                fc: s.rawScore.fc_status || null,
+                fs: s.rawScore.fs_status || null,
+                dx_rating: s.rating,
+                coverDataUri
+            });
+        }
 
         // 3. 計算統計資料
         const newTotal = b15.reduce((sum, s) => sum + s.rating, 0);
         const oldTotal = b35.reduce((sum, s) => sum + s.rating, 0);
         const b50Total = newTotal + oldTotal;
 
-        const allB50 = [...b15, ...b35];
         const averageRating = allB50.length > 0 ? b50Total / allB50.length : 0;
-        const averageAch = allB50.length > 0 ? (allB50.reduce((sum, s) => sum + s.scoreChart.achievements, 0) / allB50.length).toFixed(4) + '%' : '0.0000%';
+        const averageAch = allB50.length > 0 ? (allB50.reduce((sum, s) => sum + s.rawScore.achievements, 0) / allB50.length).toFixed(4) + '%' : '0.0000%';
         const maxRating = allB50.length > 0 ? Math.max(...allB50.map(s => s.rating)) : 0;
-        const maxDxScore = allB50.length > 0 ? Math.max(...allB50.map(s => s.scoreChart.dx_score)) : 0;
+        const maxDxScore = allB50.length > 0 ? Math.max(...allB50.map(s => s.rawScore.dx_score)) : 0;
 
         const summary: PosterSummary = {
             b50: b50Total,
@@ -125,7 +142,7 @@ export class B50Renderer {
                 // 可以根據需求加入 course_rank 等
             },
             summary,
-            charts: allB50.map(s => s.scoreChart),
+            charts: charts,
             radar: [] // 繞過 database.getChartTags()
         };
 

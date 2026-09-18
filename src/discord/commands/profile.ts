@@ -46,13 +46,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         for (const score of scores) {
             try {
-                const song = await songDb.getSong(score.song_name);
                 const diffIndex = diffMap[score.difficulty] ?? 3;
-                const sheetType = score.chart_type === 'DX' ? 'dx' : 'standard';
-                const sheet = song.difficulties[sheetType].find(d => d.difficulty === diffIndex);
-                if (!sheet) continue;
+                const chartType = score.chart_type as 'Standard' | 'DX';
+                
+                const levelValue = songDb.getConstant(score.song_name, chartType, diffIndex);
+                if (!levelValue) continue;
 
-                const rating = calculateRating(sheet.level_value, score.achievements);
+                const rating = calculateRating(levelValue, score.achievements);
                 
                 if (score.achievements >= 100.0) sssCount++;
                 if (score.achievements >= 80.0) clearCount++;
@@ -77,17 +77,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const b50Total = newTotal + oldTotal;
 
         const embed = new EmbedBuilder()
-            .setColor('#00E1D9') // maimai 亮藍綠色
-            .setTitle(`👤 ${interaction.user.username} 的 Maimai DX 玩家名片`)
+            .setColor('#00E1D9')
+            .setTitle(`[ ${interaction.user.username} 的 Maimai DX 玩家名片 ]`)
             .setThumbnail(interaction.user.displayAvatarURL())
             .addFields(
-                { name: '✨ 綜合 Rating (B50)', value: `**${b50Total}**\n(新曲: ${newTotal} / 舊曲: ${oldTotal})`, inline: false },
-                { name: '🎵 遊玩總譜面數', value: `${scores.length} 首`, inline: true },
-                { name: '👑 SSS 以上數量', value: `${sssCount} 首`, inline: true },
-                { name: '🌟 通關數量 (80%+)', value: `${clearCount} 首`, inline: true },
-                { name: '🔥 全連 (FC) 以上', value: `${fcCount} 譜面`, inline: true },
-                { name: '🌈 完美 (AP) 以上', value: `${apCount} 譜面`, inline: true },
-                { name: '⏱️ 最後更新時間', value: `<t:${Math.floor(new Date(user.updated_at).getTime() / 1000)}:R>`, inline: false }
+                { name: '綜合 Rating (B50)', value: `**${b50Total}**\n(新曲: ${newTotal} / 舊曲: ${oldTotal})`, inline: false },
+                { name: '遊玩總譜面數', value: `${scores.length} 首`, inline: true },
+                { name: 'SSS 以上數量', value: `${sssCount} 首`, inline: true },
+                { name: '通關數量 (80%+)', value: `${clearCount} 首`, inline: true },
+                { name: '全連 (FC) 以上', value: `${fcCount} 譜面`, inline: true },
+                { name: '完美 (AP) 以上', value: `${apCount} 譜面`, inline: true },
+                { name: '最後更新時間', value: `<t:${Math.floor(new Date(user.updated_at).getTime() / 1000)}:R>`, inline: false }
             )
             .setFooter({ text: 'Powered by Irika-MaimaiToolBot' })
             .setTimestamp();
@@ -96,6 +96,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     } catch (e: any) {
         console.error('[Discord] 產生 Profile 失敗:', e);
-        await interaction.editReply('❌ 產生玩家名片時發生錯誤，請稍後再試。');
+        await interaction.editReply('[錯誤] 產生玩家名片時發生錯誤，請稍後再試。');
     }
 }

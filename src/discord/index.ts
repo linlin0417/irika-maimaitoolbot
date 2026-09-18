@@ -65,7 +65,7 @@ client.on('interactionCreate', async (interaction) => {
     // 檢查白名單 (阻擋非授權用戶使用所有指令與自動完成)
     if (!whitelist.has(interaction.user.id)) {
         if (interaction.isChatInputCommand()) {
-            await interaction.reply({ content: '⛔ 您不在機器的白名單中，無法使用此功能。如有需要請聯絡管理員。', ephemeral: true });
+            await interaction.reply({ content: '[拒絕訪問] 您不在機器的白名單中，無法使用此功能。如有需要請聯絡管理員。', ephemeral: true });
         }
         return;
     }

@@ -17,13 +17,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         // 確保玩家已經綁定帳號且有資料
         const user = db.prepare('SELECT sega_id FROM users WHERE discord_id = ?').get(discordId);
         if (!user) {
-            await interaction.editReply('❌ 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
+            await interaction.editReply('[錯誤] 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
             return;
         }
 
         const scoreCount = db.prepare('SELECT COUNT(*) as count FROM scores WHERE discord_id = ?').get(discordId) as { count: number };
         if (scoreCount.count === 0) {
-            await interaction.editReply('❌ 資料庫中沒有您的成績紀錄，請先使用 `/update` 進行同步。');
+            await interaction.editReply('[錯誤] 資料庫中沒有您的成績紀錄，請先使用 `/update` 進行同步。');
             return;
         }
 
@@ -40,6 +40,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
     } catch (e: any) {
         console.error('[Discord] 產生 B50 失敗:', e);
-        await interaction.editReply('❌ 生成 B50 海報時發生錯誤，請稍後再試。');
+        await interaction.editReply('[錯誤] 生成 B50 海報時發生錯誤，請稍後再試。');
     }
 }

@@ -134,7 +134,8 @@ export async function runCrawlerForUser(discordId: string) {
     console.log(`[CrawlerService] 比對與寫入完成！首次遊玩新增: ${result.newRecordsCount} 筆，達成率突破: ${result.improvedRecordsCount} 筆。`);
     
     // 6. 抓取使用者的收藏品資料 (稱號、名牌、底板)
-    await fetchUserCollections(discordId, auth);
+    // [廢棄] 暫時關閉此功能，避免無謂的資源浪費與被鎖風險
+    // await fetchUserCollections(discordId, auth);
 
     return {
         playerName,

@@ -5,11 +5,11 @@ import { getUser } from '../../db/repository.js';
 
 export const data = new SlashCommandBuilder()
     .setName('profile')
-    .setDescription('管理與查看您的 maimai 個人資料卡')
+    .setDescription('[廢棄] 管理與查看您的 maimai 個人資料卡')
     .addSubcommand(subcommand =>
         subcommand
             .setName('show')
-            .setDescription('產生個人資料卡圖片')
+            .setDescription('[廢棄] 產生個人資料卡圖片')
             .addStringOption(option =>
                 option.setName('type')
                     .setDescription('版型大小')
@@ -23,7 +23,7 @@ export const data = new SlashCommandBuilder()
     .addSubcommand(subcommand =>
         subcommand
             .setName('equip')
-            .setDescription('替換展示於 Discord 名片上的稱號、名牌或底板')
+            .setDescription('[廢棄] 替換展示於 Discord 名片上的稱號、名牌或底板')
             .addStringOption(option =>
                 option.setName('category')
                     .setDescription('選擇要更換的種類')
@@ -37,12 +37,10 @@ export const data = new SlashCommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-    const discordId = interaction.user.id;
-    const user = getUser(discordId);
-
-    if (!user) {
-        return interaction.reply({ content: '您尚未綁定帳號！請先使用 `/bind`。', ephemeral: true });
-    }
+    return interaction.reply({ 
+        content: '⚠️ **此功能已被標註為廢棄 (Deprecated)**，目前停止提供服務。', 
+        ephemeral: true 
+    });
 
     const subcommand = interaction.options.getSubcommand();
 

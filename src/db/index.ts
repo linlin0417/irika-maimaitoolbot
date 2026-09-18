@@ -27,6 +27,13 @@ const schema = fs.readFileSync(schemaPath, 'utf8');
 // 執行 schema (若資料表已存在會被 IF NOT EXISTS 略過)
 db.exec(schema);
 
+try {
+    db.exec('ALTER TABLE users ADD COLUMN icon_url TEXT');
+    console.log(`[DB] Added icon_url column to users table.`);
+} catch (e) {
+    // 欄位已經存在時會報錯，可直接忽略
+}
+
 console.log(`[DB] SQLite database initialized at ${dbPath}`);
 
 export default db;

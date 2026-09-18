@@ -15,7 +15,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
         // 確保玩家已經綁定帳號且有資料
-        const user = db.prepare('SELECT sega_id FROM users WHERE discord_id = ?').get(discordId);
+        const user = db.prepare('SELECT sega_id, icon_url FROM users WHERE discord_id = ?').get(discordId) as any;
         if (!user) {
             await interaction.editReply('[錯誤] 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
             return;
@@ -27,7 +27,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
 
-        const avatarUrl = interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
+        // 優先使用 Maimai 官方頭像，若無則降級為 Discord 頭像
+        const avatarUrl = user.icon_url || interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
 
         // 渲染海報
         await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, outputPath);

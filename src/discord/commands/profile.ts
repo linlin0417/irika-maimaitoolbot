@@ -13,9 +13,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const discordId = interaction.user.id;
 
     try {
-        const user = db.prepare('SELECT sega_id, updated_at FROM users WHERE discord_id = ?').get(discordId) as any;
+        const user = db.prepare('SELECT sega_id, updated_at, icon_url FROM users WHERE discord_id = ?').get(discordId) as any;
         if (!user) {
-            await interaction.editReply('❌ 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
+            await interaction.editReply('[錯誤] 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
             return;
         }
 
@@ -26,7 +26,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         `).all(discordId) as any[];
 
         if (scores.length === 0) {
-            await interaction.editReply('❌ 資料庫中沒有您的成績紀錄，請先使用 `/update` 進行同步。');
+            await interaction.editReply('[錯誤] 資料庫中沒有您的成績紀錄，請先使用 `/update` 進行同步。');
             return;
         }
 
@@ -79,7 +79,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const embed = new EmbedBuilder()
             .setColor('#00E1D9')
             .setTitle(`[ ${interaction.user.username} 的 Maimai DX 玩家名片 ]`)
-            .setThumbnail(interaction.user.displayAvatarURL())
+            .setThumbnail(user.icon_url || interaction.user.displayAvatarURL())
             .addFields(
                 { name: '綜合 Rating (B50)', value: `**${b50Total}**\n(新曲: ${newTotal} / 舊曲: ${oldTotal})`, inline: false },
                 { name: '遊玩總譜面數', value: `${scores.length} 首`, inline: true },

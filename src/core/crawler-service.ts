@@ -33,6 +33,7 @@ export async function runCrawlerForUser(discordId: string) {
     // 3. 抓取首頁更新玩家名稱與 Rating
     let playerName = user.player_name || '未知';
     let rating = user.rating || 0;
+    let iconUrl = user.icon_url || null;
     try {
         const homeRes = await auth.client.get('https://maimaidx-eng.com/maimai-mobile/home/');
         const $ = cheerio.load(homeRes.data);
@@ -42,12 +43,21 @@ export async function runCrawlerForUser(discordId: string) {
         if (ratingStr) {
             rating = parseInt(ratingStr, 10);
         }
+
+        const scrapedIcon = $('img.w_112.f_l').attr('src') || $('.basic_block img').first().attr('src');
+        if (scrapedIcon) {
+            if (scrapedIcon.startsWith('http')) {
+                iconUrl = scrapedIcon;
+            } else {
+                iconUrl = new URL(scrapedIcon, 'https://maimaidx-eng.com/maimai-mobile/').href;
+            }
+        }
     } catch (e: any) {
         console.warn(`[CrawlerService] 無法更新首頁資訊: ${e.message}`);
     }
 
-    // 將最新的登入狀態寫回 DB
-    updateUserSession(discordId, newCookie, playerName, rating);
+    // 將最新的登入狀態與頭像寫回 DB
+    updateUserSession(discordId, newCookie, playerName, rating, iconUrl);
 
     // 4. 開始抓取所有難度的成績
     console.log(`[CrawlerService] 登入完畢，開始走訪成績頁面...`);

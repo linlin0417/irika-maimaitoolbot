@@ -32,16 +32,17 @@ export function getUser(discordId: string) {
     return db.prepare('SELECT * FROM users WHERE discord_id = ?').get(discordId);
 }
 
-export function updateUserSession(discordId: string, cookie: string, playerName: string, rating: number) {
+export function updateUserSession(discordId: string, cookie: string, playerName: string, rating: number, iconUrl: string | null = null) {
     const stmt = db.prepare(`
         UPDATE users SET 
             cookie = ?, 
             player_name = ?, 
             rating = ?,
+            icon_url = COALESCE(?, icon_url),
             updated_at = CURRENT_TIMESTAMP
         WHERE discord_id = ?
     `);
-    return stmt.run(cookie, playerName, rating, discordId);
+    return stmt.run(cookie, playerName, rating, iconUrl, discordId);
 }
 
 // ==========================================

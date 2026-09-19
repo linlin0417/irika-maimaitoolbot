@@ -37,6 +37,7 @@ export class B50Renderer {
             rawScore: any;
             isNew: boolean;
             rating: number;
+            levelValue: number;
             levelString: string;
             diffIndex: number;
             chartType: string;
@@ -72,6 +73,7 @@ export class B50Renderer {
                     rawScore: score,
                     isNew: coverProvider.isNewSong(score.song_name),
                     rating,
+                    levelValue,
                     levelString,
                     diffIndex,
                     chartType: chartType === 'DX' ? 'dx' : 'standard',
@@ -101,6 +103,7 @@ export class B50Renderer {
                 id: 0,
                 song_name: originalTitle,
                 level: s.levelString,
+                level_value: s.levelValue,
                 level_index: s.diffIndex,
                 type: s.chartType as any,
                 achievements: s.rawScore.achievements,

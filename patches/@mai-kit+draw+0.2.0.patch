@@ -1,7 +1,31 @@
 diff --git a/node_modules/@mai-kit/draw/dist/index.js b/node_modules/@mai-kit/draw/dist/index.js
-index 75bfa35..476873e 100644
+index 75bfa35..913a61e 100644
 --- a/node_modules/@mai-kit/draw/dist/index.js
 +++ b/node_modules/@mai-kit/draw/dist/index.js
+@@ -204,12 +204,12 @@ function formatRateLabel(rate) {
+ 	return RATE_LABELS[rate];
+ }
+ /**
+-* 目标达成率 → 「目标 SSS+」类副标题片段。
++* 目标达成率 → 「目標 SSS+」类副标题片段。
+ *
+ * 优先用显式 `targetRate`，否则由达成率推导。
+ */
+ function formatUpgradeTargetLabel(targetAchievement, targetRate) {
+-	return `目标 ${formatRateLabel(targetRate ?? rateFromAchievement(targetAchievement))}`;
++	return `目標 ${formatRateLabel(targetRate ?? rateFromAchievement(targetAchievement))}`;
+ }
+ /**
+ * 格式化达成率为四位小数百分比字符串。
+@@ -635,7 +635,7 @@ function pageMeta(page) {
+ 		accent: "#8b52df"
+ 	};
+ 	if (page === "best35") return {
+-		title: "旧曲 B35",
++		title: "舊曲 B35",
+ 		startIndex: 16,
+ 		accent: "#5542aa"
+ 	};
 @@ -1728,85 +1728,58 @@ function DonutChart({ items }) {
  		})]
  	});
@@ -140,7 +164,13 @@ index 75bfa35..476873e 100644
  }
  function RadarChart({ items }) {
  	const centerX = 135;
-@@ -2684,14 +2657,36 @@ function ratingDistributionFromCharts(charts) {
+@@ -2679,28 +2652,50 @@ function ratingDistributionFromCharts(charts) {
+ 	}));
+ }
+ /**
+-* 由 B50 成绩推导定数分布直方图（16 桶）。
++* 由 B50 成绩推导定數分佈直方图（16 桶）。
+ *
  * @throws {DrawError} 某条成绩既无 `level_value` 也无法解析 `level`
  */
  function constantDistributionFromCharts(charts) {
@@ -184,13 +214,220 @@ index 75bfa35..476873e 100644
 +  return { buckets, minBase, maxBase, bucketCount };
  }
  /**
- * 左栏「个人数据」网格：只读 `summary`（与 charts 已对齐的聚合结果）。
-@@ -2950,7 +2945,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+-* 左栏「个人数据」网格：只读 `summary`（与 charts 已对齐的聚合结果）。
++* 左栏「個人資料」网格：只读 `summary`（与 charts 已对齐的聚合结果）。
+ * 自定义网格请传 {@link PosterData.personalMetrics} 整表覆盖。
+ */
+ function personalMetricsFromSummary(summary) {
+ 	return [
+ 		{
+-			label: "平均达成率",
++			label: "平均達成率",
+ 			value: summary.averageAchievement
+ 		},
+ 		{
+@@ -2716,11 +2711,11 @@ function personalMetricsFromSummary(summary) {
+ 			value: summary.maxDxScore
+ 		},
+ 		{
+-			label: "AP+ 数量",
++			label: "AP+ 數量",
+ 			value: summary.apPlus
+ 		},
+ 		{
+-			label: "SYNC DX+ 数量",
++			label: "SYNC DX+ 數量",
+ 			value: summary.syncDxPlus
+ 		}
+ 	];
+@@ -2735,7 +2730,7 @@ function resolvePersonalMetrics(data) {
+ * 从 charts 聚合 poster 用 {@link PosterSummary}（唯一写入 summary 的路径）。
+ *
+ * @param charts - 已按 B15+B35 排好的成绩
+-* @param sectionTotals - 可选：新/旧曲区合计（优先于切片求和，对齐 prober `dx_total` / `standard_total`）
++* @param sectionTotals - 可选：新/舊曲区合计（优先于切片求和，对齐 prober `dx_total` / `standard_total`）
+ */
+ function summarizeCharts(charts, sectionTotals) {
+ 	const newCharts = charts.slice(0, 15);
+@@ -2873,7 +2868,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 										style: posterStyles.scoreBox,
+ 										children: [
+ 											/* @__PURE__ */ jsx(SummaryLine, {
+-												label: "B50 总分",
++												label: "B50 總分",
+ 												value: data.summary.b50
+ 											}),
+ 											/* @__PURE__ */ jsx(SummaryLine, {
+@@ -2881,7 +2876,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 												value: data.summary.newSongs
+ 											}),
+ 											/* @__PURE__ */ jsx(SummaryLine, {
+-												label: "旧曲 B35",
++												label: "舊曲 B35",
+ 												value: data.summary.oldSongs
+ 											})
+ 										]
+@@ -2890,7 +2885,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 							}),
+ 							/* @__PURE__ */ jsxs("div", {
+ 								style: posterStyles.generated,
+-								children: ["生成于 ", generatedAt]
++								children: ["生成於 ", generatedAt]
+ 							})
+ 						]
+ 					}),
+@@ -2913,7 +2908,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 								style: posterStyles.statCell,
  								children: [/* @__PURE__ */ jsx("div", {
  									style: posterStyles.panelTitleSmall,
- 									children: "定数分布 (B50)"
+-									children: "RATING 分布"
++									children: "RATING 分佈"
+ 								}), /* @__PURE__ */ jsxs("div", {
+ 									style: posterStyles.donutRow,
+ 									children: [/* @__PURE__ */ jsx(DonutChart, { items: ratingDistribution }), /* @__PURE__ */ jsx("div", {
+@@ -2949,8 +2944,8 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 								style: posterStyles.statCellRight,
+ 								children: [/* @__PURE__ */ jsx("div", {
+ 									style: posterStyles.panelTitleSmall,
+-									children: "定数分布 (B50)"
 -								}), /* @__PURE__ */ jsx(BarChart, { values: constantDistribution })]
++									children: "定數分佈 (B50)"
 +								}), /* @__PURE__ */ jsx(BarChart, { data: constantDistribution })]
  							})]
  						})
  					}),
+@@ -2962,13 +2957,13 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 								style: posterStyles.radarArea,
+ 								children: [/* @__PURE__ */ jsx("div", {
+ 									style: posterStyles.panelTitleSmall,
+-									children: "B50 谱面倾向"
++									children: "B50 譜面傾向"
+ 								}), /* @__PURE__ */ jsx(RadarChart, { items: data.radar })]
+ 							}), /* @__PURE__ */ jsxs("div", {
+ 								style: posterStyles.personalArea,
+ 								children: [/* @__PURE__ */ jsx("div", {
+ 									style: posterStyles.panelTitleSmall,
+-									children: "个人数据"
++									children: "個人資料"
+ 								}), /* @__PURE__ */ jsx("div", {
+ 									style: posterStyles.metricsGrid,
+ 									children: personalMetrics.map((metric) => /* @__PURE__ */ jsx(Metric, {
+@@ -3005,7 +3000,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ 						top: b15Top
+ 					}),
+ 					/* @__PURE__ */ jsx(SongSection, {
+-						title: "旧曲",
++						title: "舊曲",
+ 						subtitle: "B35",
+ 						charts: b35,
+ 						start: 16,
+@@ -3029,7 +3024,7 @@ function B50Poster({ data, header, footerLeft, footerRight }) {
+ //#endregion
+ //#region src/components/upgrades-board.tsx
+ /**
+-* 加分推荐板（16:9，两列网格；卡片内固定栏位对齐）。
++* 加分推薦板（16:9，两列网格；卡片内固定栏位对齐）。
+ */
+ /** 加分板逻辑画布宽（与 B50 同为 1920）。 */
+ const UPGRADES_BOARD_WIDTH = W;
+@@ -3157,7 +3152,7 @@ const styles = {
+ 	}
+ };
+ /**
+-* 加分推荐板 JSX（16:9，两列）。
++* 加分推薦板 JSX（16:9，两列）。
+ *
+ * @remarks 稳定性：布局 API，可能随视觉设计调整。
+ * @beta
+@@ -3167,7 +3162,7 @@ function UpgradesBoard({ data, header, footerLeft, footerRight }) {
+ 	const showHeader = Boolean(header);
+ 	const showFooter = Boolean(footerLeft || footerRight);
+ 	const first = items[0];
+-	const subtitle = `${first === void 0 ? "" : `${formatUpgradeTargetLabel(first.targetAchievement, first.targetRate)} · `}显示 ${items.length}/${LIST_MAX}${data.candidates.length > LIST_MAX ? ` · 候选共 ${data.candidates.length}` : ""}`;
++	const subtitle = `${first === void 0 ? "" : `${formatUpgradeTargetLabel(first.targetAchievement, first.targetRate)} · `}顯示 ${items.length}/${LIST_MAX}${data.candidates.length > LIST_MAX ? ` · 候選共 ${data.candidates.length}` : ""}`;
+ 	const columns = items.length <= 4 ? 1 : COLS;
+ 	const rowCount = Math.max(1, Math.ceil(items.length / columns));
+ 	const cardH = (LIST_H + (showHeader ? 0 : 36) + (showFooter ? 0 : 26) - ROW_GAP * (rowCount - 1)) / rowCount;
+@@ -3206,7 +3201,7 @@ function UpgradesBoard({ data, header, footerLeft, footerRight }) {
+ 							}),
+ 							/* @__PURE__ */ jsx("div", {
+ 								style: styles.title,
+-								children: "加分推荐"
++								children: "加分推薦"
+ 							}),
+ 							/* @__PURE__ */ jsx("div", {
+ 								style: styles.subtitle,
+@@ -3217,7 +3212,7 @@ function UpgradesBoard({ data, header, footerLeft, footerRight }) {
+ 				}),
+ 				items.length === 0 ? /* @__PURE__ */ jsx("div", {
+ 					style: styles.empty,
+-					children: "暂无加分候选"
++					children: "暫無加分候選"
+ 				}) : /* @__PURE__ */ jsx("div", {
+ 					style: styles.grid,
+ 					children: gridRows.map((pair, r) => /* @__PURE__ */ jsxs("div", {
+@@ -3547,7 +3542,7 @@ function UpgradeCell({ row, rank, width, height, cover: coverSize, titleFs, meta
+ 						letterSpacing: 1,
+ 						marginBottom: 5
+ 					},
+-					children: "预计提升"
++					children: "預計提升"
+ 				}), /* @__PURE__ */ jsx("div", {
+ 					style: {
+ 						display: "flex",
+@@ -3569,10 +3564,10 @@ function UpgradeCell({ row, rank, width, height, cover: coverSize, titleFs, meta
+ *
+ * 由 {@link Draw.poster} 调用；也可经包根 `buildPosterData` 单独使用。
+ *
+-* - `source.getChartTags`：谱面倾向雷达（必选）
++* - `source.getChartTags`：譜面傾向雷达（必选）
+ * - `source.getSongList`（可选）：自动填 `dx_max` / `level_value`
+ * - **只写入权威字段**：`player` / `charts` / `summary` / `radar`
+-*   （评级/定数分布与个人数据网格在渲染时从 charts/summary 派生，不双写）
++*   （评级/定數分佈与個人資料网格在渲染时从 charts/summary 派生，不双写）
+ *
+ * 封面 / 头像在渲染阶段解析。
+ *
+@@ -3744,7 +3739,7 @@ async function resolvePlayerAvatar(player, database, fallback) {
+ * | {@link chart} / {@link chartSvg} | 单曲成绩 | 无玩家栏的单曲成绩卡 |
+ * | {@link upgrades} / {@link upgradesSvg} | {@link UpgradeBoardData} | 加分板（宿主先算候选） |
+ *
+-* Best 板**只切割、不重排**；数量不足则有几画几（不补假数据、不满员不报错）。
++* Best 板**只切割、不重排**；數量不足则有几画几（不补假数据、不满员不报错）。
+ *
+ * @example
+ * ```ts
+@@ -3793,13 +3788,13 @@ var Draw = class Draw {
+ 		return this.renderBestSvg("best15", player, chartsFromBests("best15", bests), options);
+ 	}
+ 	/**
+-	* 旧曲 B35 板 PNG。
++	* 舊曲 B35 板 PNG。
+ 	* 从 `bests.standard` **按原顺序**取前最多 35 首；不足则少画，不排序、不补全。
+ 	*/
+ 	async best35(player, bests, options = {}) {
+ 		return this.renderBestPng("best35", player, chartsFromBests("best35", bests), options);
+ 	}
+-	/** 旧曲 B35 板 SVG。语义同 {@link best35}。 */
++	/** 舊曲 B35 板 SVG。语义同 {@link best35}。 */
+ 	async best35Svg(player, bests, options = {}) {
+ 		return this.renderBestSvg("best35", player, chartsFromBests("best35", bests), options);
+ 	}
+@@ -3844,7 +3839,7 @@ var Draw = class Draw {
+ 		}
+ 	}
+ 	/**
+-	* 加分推荐板 PNG。
++	* 加分推薦板 PNG。
+ 	* 候选须由宿主事先算好（推荐 `@mai-kit/analysis` 的 `rankBestsUpgradeCandidates`，
+ 	* 即能抬 B15/B35 的全曲候选）；draw **不**依赖 analysis，也不重新排序。
+ 	*/
+@@ -3852,7 +3847,7 @@ var Draw = class Draw {
+ 		const scale = options.scale ?? 2;
+ 		return rasterizeSvgToPng(await this.upgradesSvg(data, options), Draw.getBoardSize(scale).width);
+ 	}
+-	/** 加分推荐板 SVG。 */
++	/** 加分推薦板 SVG。 */
+ 	async upgradesSvg(data, options = {}) {
+ 		assertUniformUpgradeTarget(data);
+ 		const fallback = options.assetFallback ?? "error";

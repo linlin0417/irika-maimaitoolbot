@@ -37,13 +37,12 @@ dirs.forEach(d => {
 ensureConfig('.env.example', '.env');
 ensureConfig('cfg/dc_whitelist.cfg.example', 'cfg/dc_whitelist.cfg');
 
-// 修補 mai-kit 語系
-import { execSync } from 'child_process';
-try {
-    execSync('node scripts/patch-maikit.cjs', { stdio: 'inherit' });
-} catch (e) {
-    console.warn('[Setup] 執行 mai-kit 語系修補失敗');
-}
+// import { execSync } from 'child_process';
+// try {
+//     execSync('node scripts/patch-maikit.cjs', { stdio: 'inherit' });
+// } catch (e) {
+//     console.warn('[Setup] 執行 mai-kit 語系修補失敗');
+// }
 
 console.log('\n[Setup] 初始化完成！');
 console.log('請記得填寫 .env 以及 cfg/dc_whitelist.cfg 中的設定值！');

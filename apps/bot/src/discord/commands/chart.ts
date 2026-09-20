@@ -57,11 +57,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // 從資料庫撈出該曲目所有歷史成績
     const records = db.prepare(`
-        SELECT achievements, timestamp 
+        SELECT achievements, recorded_at 
         FROM score_history 
         WHERE discord_id = ? AND song_name = ? AND difficulty = ?
-        ORDER BY timestamp ASC
-    `).all(discordId, songName, difficulty) as { achievements: number, timestamp: string }[];
+        ORDER BY recorded_at ASC
+    `).all(discordId, songName, difficulty) as { achievements: number, recorded_at: string }[];
 
     if (records.length === 0) {
         let debugMsg = `找不到您在該首歌曲該難度的歷史成績，請確認曲名是否正確，或是先使用 \`/update\` 進行同步。`;
@@ -91,7 +91,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const chartData = records.map(r => ({
-        playTime: new Date(r.timestamp),
+        playTime: new Date(r.recorded_at),
         achievement: r.achievements
     }));
 

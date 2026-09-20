@@ -37,6 +37,7 @@ export const data = new SlashCommandBuilder()
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    const discordId = interaction.user.id;
     return interaction.reply({ 
         content: '⚠️ **此功能已被標註為廢棄 (Deprecated)**，目前停止提供服務。', 
         ephemeral: true 
@@ -116,10 +117,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             
             const selectedValue = confirmation.values[0];
             if (selectedValue) {
-                updateUserEquipment(discordId, category, selectedValue);
+                updateUserEquipment(discordId, category, selectedValue as string);
+                await confirmation.update({ content: `裝備更新成功！您選擇了：${selectedValue}\n馬上使用 \`/profile show\` 看看新外觀吧！`, components: [] });
+            } else {
+                await confirmation.update({ content: '未選擇任何項目。', components: [] });
             }
-            
-            await confirmation.update({ content: `裝備更新成功！您選擇了：${selectedValue}\n馬上使用 \`/profile show\` 看看新外觀吧！`, components: [] });
         } catch (e) {
             await interaction.editReply({ content: '選擇逾時或發生錯誤，請重試。', components: [] });
         }

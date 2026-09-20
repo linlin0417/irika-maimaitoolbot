@@ -71,7 +71,7 @@ export class B50Renderer {
 
                 parsedScores.push({
                     rawScore: score,
-                    isNew: coverProvider.isNewSong(score.song_name),
+                    isNew: songDb.isNewSong(score.song_name, chartType),
                     rating,
                     levelValue,
                     levelString,

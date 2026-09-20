@@ -6,7 +6,7 @@ import db from '../../db/index.js';
 
 export const data = new SlashCommandBuilder()
     .setName('b50')
-    .setDescription('產生您的 Best 50 總結海報 (依據最新 PRiSM 版本區分新舊曲)');
+    .setDescription('產生您的 Best 50 總結海報 (依據國際板最新版本區分新舊曲)');
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();

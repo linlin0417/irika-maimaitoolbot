@@ -1,0 +1,60 @@
+{
+  "name": "@mai-kit/draw",
+  "version": "0.2.0",
+  "description": "舞萌 DX 成绩海报渲染。",
+  "keywords": [
+    "maimai",
+    "maimai-dx",
+    "poster-generator",
+    "satori",
+    "typescript"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mai-kit/mai-kit.git",
+    "directory": "packages/draw"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "browser": {
+    "@resvg/resvg-js": false
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "node --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@mai-kit/assets": "latest",
+    "@mai-kit/prober": "latest",
+    "@mai-kit/shared": "latest",
+    "@mai-kit/utils": "latest",
+    "@resvg/resvg-js": "^2.6.2",
+    "@resvg/resvg-wasm": "^2.6.2",
+    "react": "^19.1.0",
+    "satori": "^0.26.0"
+  },
+  "devDependencies": {
+    "@mai-kit/analysis": "latest",
+    "@mai-kit/database": "latest",
+    "@types/node": "^24.5.1",
+    "@types/react": "^19.1.0"
+  }
+}

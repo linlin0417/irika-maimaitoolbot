@@ -11,17 +11,19 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# 複製 package.json 進行安裝
+# 複製 package.json 進行安裝 (Monorepo root)
 COPY package*.json ./
+COPY apps/bot/package*.json ./apps/bot/
+COPY packages/mai-kit-draw/package*.json ./packages/mai-kit-draw/
 
-# 安裝依賴 (包含執行 setup 腳本)
+# 安裝依賴
 RUN npm install
 
 # 複製其餘所有專案檔案
 COPY . .
 
-# 暴露可能需要的 Port (雖然 Discord bot 不一定需要，但先保留)
-# EXPOSE 3000
+# 設定執行目錄為 bot app
+WORKDIR /app/apps/bot
 
 # 設定啟動指令
 CMD ["npm", "start"]

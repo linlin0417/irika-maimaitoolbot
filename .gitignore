@@ -28,6 +28,7 @@ Thumbs.db
 
 # Configuration files
 **/cfg/*.cfg
+**/cfg/*.json
 !**/cfg/*.cfg.example
 
 # Test outputs

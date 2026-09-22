@@ -1,0 +1,1 @@
+import { LxnsMaimaiDatabase } from '@mai-kit/database'; const db = new LxnsMaimaiDatabase(); const res = await db.getChartTags([{ song_name: 'ウミユリ海底譚', type: 'standard', level_index: 3 }]); console.log(res);

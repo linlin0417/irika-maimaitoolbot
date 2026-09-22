@@ -6,6 +6,7 @@ import './db/index'; // 確保資料庫初始化
 import { startScheduler } from './core/scheduler';
 import { startDiscordBot } from './discord/index';
 import { DxRatingCoverProvider } from './core/dxrating-covers';
+import { startAutoBackup } from './core/autobackup.js';
 
 async function bootstrap() {
     console.log('====================================');
@@ -20,6 +21,11 @@ async function bootstrap() {
 
     // 2. 啟動背景排程 (傳入 client 供私訊通知使用)
     startScheduler(client);
+
+    // 3. 啟動自動備份排程
+    if (client) {
+        startAutoBackup(client);
+    }
 }
 
 bootstrap();

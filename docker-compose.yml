@@ -7,9 +7,9 @@ services:
     restart: unless-stopped
     volumes:
       # 持久化資料庫與封面快取
-      - ./data:/app/data
+      - ./apps/bot/data:/app/apps/bot/data
       # 映射設定檔
-      - ./.env:/app/.env
-      - ./cfg:/app/cfg
+      - ./apps/bot/.env:/app/apps/bot/.env
+      - ./apps/bot/cfg:/app/apps/bot/cfg
     environment:
       - NODE_ENV=production

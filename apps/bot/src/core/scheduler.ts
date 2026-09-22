@@ -11,8 +11,8 @@ export function startScheduler(client?: Client) {
 
     const songDb = SongDatabase.getInstance();
 
-    // 每天 04:00 AM (伺服器維護後) 進行歌曲資料庫同步
-    cron.schedule('0 4 * * *', async () => {
+    // 每天 06:30 AM (避開伺服器維護 00:55~06:05) 進行歌曲資料庫同步
+    cron.schedule('30 6 * * *', async () => {
         console.log('[Scheduler] 執行每日歌曲庫同步...');
         await songDb.syncFromServer();
     });
@@ -51,7 +51,7 @@ export function startScheduler(client?: Client) {
     };
 
     // 依照專案需求：每 3 小時動態觸發一次
-    // 第一次晚 10 分鐘 (06:10)，最後一次早 5 分鐘 (00:55)
+    // 第一次晚 10 分鐘 (06:10)，最後一次早 10 分鐘 (00:50)
     
     // 註冊 06:10, 09:10, 12:10, 15:10, 18:10, 21:10 的排程
     cron.schedule('10 6,9,12,15,18,21 * * *', () => {
@@ -59,9 +59,9 @@ export function startScheduler(client?: Client) {
         crawlAllUsers();
     });
 
-    // 註冊 00:55 的排程
-    cron.schedule('55 0 * * *', () => {
-        console.log('[Scheduler] 觸發當日最後一次定期爬蟲任務 (00:55)');
+    // 註冊 00:50 的排程 (避開 00:55~06:05 區間)
+    cron.schedule('50 0 * * *', () => {
+        console.log('[Scheduler] 觸發當日最後一次定期爬蟲任務 (00:50)');
         crawlAllUsers();
     });
     

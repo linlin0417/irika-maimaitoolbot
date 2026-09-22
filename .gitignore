@@ -27,8 +27,8 @@ Thumbs.db
 .md/
 
 # Configuration files
-cfg/*.cfg
-!cfg/*.cfg.example
+**/cfg/*.cfg
+!**/cfg/*.cfg.example
 
 # Test outputs
 tests/output/

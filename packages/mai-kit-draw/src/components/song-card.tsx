@@ -1,3 +1,4 @@
+import React from 'react';
 import { placeholderCover } from "../assets";
 import {
   formatAchievement,

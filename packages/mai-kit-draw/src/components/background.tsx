@@ -1,3 +1,4 @@
+import React from 'react';
 import type { CSSProperties } from "react";
 import { svgDataUri } from "../encoding";
 import { H, W } from "./theme";

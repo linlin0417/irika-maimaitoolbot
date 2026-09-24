@@ -1,3 +1,4 @@
+import React from 'react';
 import { getClassRankBadge, getCourseRankBadge } from "@mai-kit/assets";
 import { placeholderAvatar } from "../assets";
 import type { PosterData } from "../types";

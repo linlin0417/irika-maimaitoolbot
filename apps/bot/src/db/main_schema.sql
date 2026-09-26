@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     lxns_token TEXT,
     player_name TEXT,
     rating INTEGER DEFAULT 0,
+    play_count INTEGER DEFAULT 0,
     icon_url TEXT,
     current_title TEXT,
     current_plate TEXT,

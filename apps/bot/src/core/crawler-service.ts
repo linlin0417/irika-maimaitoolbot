@@ -49,26 +49,31 @@ export async function runCrawlerForUser(discordId: string) {
 
         let scrapedIcon = $('img.w_112.f_l').attr('src') || $('.basic_block img').first().attr('src');
         console.log(`[DEBUG Crawler] 原始解析到的 Icon URL: ${scrapedIcon}`);
+        let playCount = user.play_count || 0;
         
-        // 如果連 Icon 都沒找到，或是遇到預設空圖示 (img/Icon/)，則執行進階降級尋找
-        if (!scrapedIcon || scrapedIcon.endsWith('img/Icon/') || scrapedIcon.endsWith('img/Icon')) {
-            console.log(`[DEBUG Crawler] 偵測到無效或預設 Icon，嘗試從 /playerData/ 獲取...`);
+        try {
+            const pdRes = await auth.client.get('https://maimaidx-eng.com/maimai-mobile/playerData/');
+            const $pd = cheerio.load(pdRes.data);
+            let pdIcon = $pd('img.w_112.f_l').attr('src');
             
-            try {
-                const pdRes = await auth.client.get('https://maimaidx-eng.com/maimai-mobile/playerData/');
-                const $pd = cheerio.load(pdRes.data);
-                let pdIcon = $pd('img.w_112.f_l').attr('src');
-                
+            // 解析總遊玩道數 (Play Count)
+            const pdText = $pd('body').text();
+            const playCountMatch = pdText.match(/Play Count\s*[:：]\s*([\d,]+)/i) || pdText.match(/プレイ回数\s*[:：]\s*([\d,]+)/i) || pdText.match(/遊玩次數\s*[:：]\s*([\d,]+)/i);
+            if (playCountMatch) {
+                playCount = parseInt(playCountMatch[1].replace(/,/g, ''), 10);
+                console.log(`[DEBUG Crawler] 解析到總遊玩道數: ${playCount}`);
+            }
+            
+            if (!scrapedIcon || scrapedIcon.endsWith('img/Icon/') || scrapedIcon.endsWith('img/Icon')) {
                 if (pdIcon && !pdIcon.endsWith('img/Icon/') && !pdIcon.endsWith('img/Icon')) {
-                    console.log(`[DEBUG Crawler] 在 /playerData/ 找到有效的 Icon: ${pdIcon}`);
                     scrapedIcon = pdIcon;
                 } else {
-                    console.log(`[DEBUG Crawler] /playerData/ Icon 依然無效，直接降級尋找首頁的搭檔角色 (Chara) 作為頭像...`);
                     scrapedIcon = $('img[src*="Chara"]').attr('src');
-                    console.log(`[DEBUG Crawler] 找到的搭檔角色 URL: ${scrapedIcon}`);
                 }
-            } catch (err: any) {
-                console.warn(`[DEBUG Crawler] 進階抓取失敗: ${err.message}，降級尋找搭檔角色 (Chara)`);
+            }
+        } catch (err: any) {
+            console.warn(`[DEBUG Crawler] 抓取 playerData 失敗: ${err.message}`);
+            if (!scrapedIcon || scrapedIcon.endsWith('img/Icon/') || scrapedIcon.endsWith('img/Icon')) {
                 scrapedIcon = $('img[src*="Chara"]').attr('src');
             }
         }
@@ -119,8 +124,18 @@ export async function runCrawlerForUser(discordId: string) {
         console.warn(`[DEBUG Crawler] 無法更新首頁資訊: ${e.message}`);
     }
 
-    // 將最新的登入狀態與頭像寫回 DB
-    updateUserSession(discordId, newCookie, playerName, rating, iconUrl);
+    // 將最新的登入狀態、遊玩次數與頭像寫回 DB
+    updateUserSession(discordId, newCookie, playerName, rating, playCount, iconUrl);
+    
+    // 記錄每日遊玩次數 (草地圖用)
+    if (playCount > 0) {
+        try {
+            const { updateDailyStats } = await import('../db/repository_stats.js');
+            updateDailyStats(discordId, playCount);
+        } catch (e: any) {
+            console.warn(`[DEBUG Crawler] 更新每日統計失敗: ${e.message}`);
+        }
+    }
 
     // 4. 開始抓取所有難度的成績
     console.log(`[CrawlerService] 登入完畢，開始走訪成績頁面...`);

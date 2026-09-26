@@ -49,7 +49,7 @@ export function getUser(discordId: string) {
     return row;
 }
 
-export function updateUserSession(discordId: string, cookie: string, playerName: string, rating: number, iconUrl: string | null = null) {
+export function updateUserSession(discordId: string, cookie: string, playerName: string, rating: number, playCount: number, iconUrl: string | null = null) {
     const mainDb = dbManager.getMainDb();
     const row = mainDb.prepare('SELECT account_id FROM discord_mappings WHERE discord_id = ?').get(discordId) as { account_id: string } | undefined;
     if (!row) return;
@@ -59,11 +59,12 @@ export function updateUserSession(discordId: string, cookie: string, playerName:
             cookie = ?, 
             player_name = ?, 
             rating = ?,
+            play_count = ?,
             icon_url = COALESCE(?, icon_url),
             updated_at = CURRENT_TIMESTAMP
         WHERE account_id = ?
     `);
-    return stmt.run(cookie, playerName, rating, iconUrl, row.account_id);
+    return stmt.run(cookie, playerName, rating, playCount, iconUrl, row.account_id);
 }
 
 // ==========================================

@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS user_frames (
 -- 7. 每日遊玩道數統計 (Daily Stats - 用於畫草地圖)
 CREATE TABLE IF NOT EXISTS daily_stats (
     date TEXT PRIMARY KEY, -- YYYY-MM-DD
-    play_count INTEGER DEFAULT 0,
+    play_count INTEGER DEFAULT 0, -- 今日新增遊玩次數
+    total_play_count INTEGER DEFAULT 0, -- 累計總遊玩次數
     first_play_at DATETIME,
     last_play_at DATETIME
 );

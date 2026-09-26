@@ -76,12 +76,20 @@ async function migrate() {
             for (const s of scores) insertScore.run(s.song_name ?? null, s.chart_type ?? null, s.difficulty ?? null, s.achievements ?? null, s.dx_score ?? null, s.fc_status ?? null, s.fs_status ?? null, s.updated_at ?? null);
 
             // Score History
-            const history = oldDb.prepare('SELECT * FROM score_history WHERE discord_id = ?').all(user.discord_id) as any[];
-            const insertHist = userDb.prepare(`INSERT INTO score_history (song_name, chart_type, difficulty, achievements, dx_score, recorded_at) VALUES (?, ?, ?, ?, ?, ?)`);
-            for (const h of history) insertHist.run(h.song_name ?? null, h.chart_type ?? null, h.difficulty ?? null, h.achievements ?? null, h.dx_score ?? null, h.recorded_at ?? null);
+            try {
+                const history = oldDb.prepare('SELECT * FROM score_history WHERE discord_id = ?').all(user.discord_id) as any[];
+                const insertHist = userDb.prepare(`INSERT INTO score_history (song_name, chart_type, difficulty, achievements, dx_score, recorded_at) VALUES (?, ?, ?, ?, ?, ?)`);
+                for (const h of history) insertHist.run(h.song_name ?? null, h.chart_type ?? null, h.difficulty ?? null, h.achievements ?? null, h.dx_score ?? null, h.recorded_at ?? null);
+            } catch (e) {}
 
-            // Playlog
-            const playlogs = oldDb.prepare('SELECT * FROM maimai_playlog WHERE discord_id = ?').all(user.discord_id) as any[];
+            // Playlog (可能在舊版資料庫中不存在)
+            let playlogs: any[] = [];
+            try {
+                playlogs = oldDb.prepare('SELECT * FROM maimai_playlog WHERE discord_id = ?').all(user.discord_id) as any[];
+            } catch (e) {
+                // Table doesn't exist, ignore
+            }
+            
             const insertLog = userDb.prepare(`
                 INSERT OR IGNORE INTO maimai_playlog (
                     play_idx, song_name, difficulty, chart_type, level, achievement, dx_score, dx_score_max, fast_count, late_count,
@@ -102,22 +110,28 @@ async function migrate() {
             }
 
             // Titles
-            const titles = oldDb.prepare('SELECT * FROM user_titles WHERE discord_id = ?').all(user.discord_id) as any[];
-            const insertTitle = userDb.prepare('INSERT OR IGNORE INTO user_titles (title_name, title_type) VALUES (?, ?)');
-            for (const t of titles) insertTitle.run(t.title_name ?? null, t.title_type ?? null);
+            try {
+                const titles = oldDb.prepare('SELECT * FROM user_titles WHERE discord_id = ?').all(user.discord_id) as any[];
+                const insertTitle = userDb.prepare('INSERT OR IGNORE INTO user_titles (title_name, title_type) VALUES (?, ?)');
+                for (const t of titles) insertTitle.run(t.title_name ?? null, t.title_type ?? null);
+            } catch (e) {}
 
             // Plates
-            const plates = oldDb.prepare('SELECT * FROM user_plates WHERE discord_id = ?').all(user.discord_id) as any[];
-            const insertPlate = userDb.prepare('INSERT OR IGNORE INTO user_plates (plate_name, plate_url) VALUES (?, ?)');
-            for (const p of plates) insertPlate.run(p.plate_name ?? null, p.plate_url ?? null);
+            try {
+                const plates = oldDb.prepare('SELECT * FROM user_plates WHERE discord_id = ?').all(user.discord_id) as any[];
+                const insertPlate = userDb.prepare('INSERT OR IGNORE INTO user_plates (plate_name, plate_url) VALUES (?, ?)');
+                for (const p of plates) insertPlate.run(p.plate_name ?? null, p.plate_url ?? null);
+            } catch (e) {}
 
             // Frames
-            const frames = oldDb.prepare('SELECT * FROM user_frames WHERE discord_id = ?').all(user.discord_id) as any[];
-            const insertFrame = userDb.prepare('INSERT OR IGNORE INTO user_frames (frame_name, frame_url) VALUES (?, ?)');
-            for (const f of frames) insertFrame.run(f.frame_name ?? null, f.frame_url ?? null);
+            try {
+                const frames = oldDb.prepare('SELECT * FROM user_frames WHERE discord_id = ?').all(user.discord_id) as any[];
+                const insertFrame = userDb.prepare('INSERT OR IGNORE INTO user_frames (frame_name, frame_url) VALUES (?, ?)');
+                for (const f of frames) insertFrame.run(f.frame_name ?? null, f.frame_url ?? null);
+            } catch (e) {}
             
         })();
-        console.log(`  - 玩家 ${user.player_name || user.discord_id} 資料轉移完成 (成績: ${scores.length}, 歷史: ${history.length}, 紀錄: ${playlogs.length})`);
+        console.log(`  - 玩家 ${user.player_name || user.discord_id} 資料轉移完成`);
     }
 
     oldDb.close();

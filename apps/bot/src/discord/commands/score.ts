@@ -1,18 +1,11 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, AttachmentBuilder } from 'discord.js';
-import db from '../../db/index';
-import { PosterRenderer } from '../../render/poster';
-import { SongDatabase } from '../../core/song-db';
-import { getRank, calculateRating } from '../../core/rating';
+import { dbManager } from '../../db/DatabaseManager.js';
+import { PosterRenderer } from '../../render/poster.js';
+import { SongDatabase } from '../../core/song-db.js';
+import { getRank, calculateRating } from '../../core/rating.js';
+import { DiffMap } from '../../render/template/constants.js';
 import path from 'path';
 import fs from 'fs';
-
-const diffIndices: Record<string, number> = {
-    'Basic': 0,
-    'Advanced': 1,
-    'Expert': 2,
-    'Master': 3,
-    'Re:MASTER': 4
-};
 
 export const data = new SlashCommandBuilder()
     .setName('score')
@@ -63,21 +56,29 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.deferReply(); 
 
-    // 從資料庫撈出該曲目最佳成績
-    const record = db.prepare(`
+    let account: any;
+    try {
+        account = dbManager.getAccountByDiscordId(discordId);
+    } catch(e) {
+        await interaction.editReply('找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
+        return;
+    }
+
+    const userDb = dbManager.getUserDb(account.account_id);
+
+    const record = userDb.prepare(`
         SELECT achievements, dx_score, chart_type, fc_status, fs_status 
         FROM scores 
-        WHERE discord_id = ? AND song_name = ? AND difficulty = ?
+        WHERE song_name = ? AND difficulty = ?
         ORDER BY achievements DESC LIMIT 1
-    `).get(discordId, songName, difficulty) as { achievements: number, dx_score: number, chart_type: 'Standard' | 'DX', fc_status: string | null, fs_status: string | null } | undefined;
+    `).get(songName, difficulty) as { achievements: number, dx_score: number, chart_type: 'Standard' | 'DX', fc_status: string | null, fs_status: string | null } | undefined;
 
     if (!record) {
         let debugMsg = `找不到您在該首歌曲該難度的遊玩紀錄，請確認曲名是否正確，或是先使用 \`/update\` 進行同步。`;
         
         if (isDebug) {
-            // 嘗試尋找相近的曲名或該曲名的其他難度
-            const similarSongs = db.prepare(`SELECT DISTINCT song_name FROM scores WHERE discord_id = ? AND song_name LIKE ? LIMIT 5`).all(discordId, `%${songName.substring(0, 3)}%`) as { song_name: string }[];
-            const playedDiffs = db.prepare(`SELECT difficulty FROM scores WHERE discord_id = ? AND song_name = ?`).all(discordId, songName) as { difficulty: string }[];
+            const similarSongs = userDb.prepare(`SELECT DISTINCT song_name FROM scores WHERE song_name LIKE ? LIMIT 5`).all(`%${songName.substring(0, 3)}%`) as { song_name: string }[];
+            const playedDiffs = userDb.prepare(`SELECT difficulty FROM scores WHERE song_name = ?`).all(songName) as { difficulty: string }[];
             
             debugMsg += `\n\n**[Debug 診斷資訊]**\n- 查詢曲名: \`${songName}\`\n- 查詢難度: \`${difficulty}\`\n`;
             debugMsg += `- 您在資料庫中該曲有紀錄的難度: ${playedDiffs.length > 0 ? playedDiffs.map(d => d.difficulty).join(', ') : '無'}\n`;
@@ -87,9 +88,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
-    // 計算 Rating 與 Rank
     const songDb = SongDatabase.getInstance();
-    const diffIndex = diffIndices[difficulty] as number;
+    const diffIndex = DiffMap[difficulty] as number;
     let constant = songDb.getConstant(songName, record.chart_type, diffIndex);
 
     if (constant == null) {

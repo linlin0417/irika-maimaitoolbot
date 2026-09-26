@@ -2,16 +2,19 @@ import dotenv from 'dotenv';
 // 確保優先讀取環境變數
 dotenv.config();
 
-import './db/index'; // 確保資料庫初始化
-import { startScheduler } from './core/scheduler';
-import { startDiscordBot } from './discord/index';
-import { DxRatingCoverProvider } from './core/dxrating-covers';
+import { dbManager } from './db/DatabaseManager.js'; // 確保資料庫初始化
+import { startScheduler } from './core/scheduler.js';
+import { startDiscordBot } from './discord/index.js';
+import { DxRatingCoverProvider } from './core/dxrating-covers.js';
 import { startAutoBackup } from './core/autobackup.js';
 
 async function bootstrap() {
     console.log('====================================');
     console.log('   Irika-MaimaiToolBot 系統啟動中   ');
     console.log('====================================');
+
+    // 0. 喚醒資料庫管理器
+    dbManager.getMainDb();
 
     // 0. 初始化外部曲繪庫 (gekichumai/dxdata)
     await DxRatingCoverProvider.getInstance().init();

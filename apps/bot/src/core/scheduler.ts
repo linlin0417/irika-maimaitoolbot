@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import db from '../db/index.js';
+import { dbManager } from '../db/DatabaseManager.js';
 import { runCrawlerForUser } from './crawler-service.js';
 import { SongDatabase } from './song-db.js';
 import type { Client } from 'discord.js';
@@ -19,7 +19,8 @@ export function startScheduler(client?: Client) {
 
     // 定義自動爬蟲任務
     const crawlAllUsers = async () => {
-        const users = db.prepare('SELECT discord_id FROM users WHERE sega_id IS NOT NULL AND sega_password IS NOT NULL').all() as { discord_id: string }[];
+        const mainDb = dbManager.getMainDb();
+        const users = mainDb.prepare('SELECT a.sega_id, a.sega_password, m.discord_id FROM accounts a JOIN discord_mappings m ON a.account_id = m.account_id WHERE a.sega_id IS NOT NULL AND a.sega_password IS NOT NULL').all() as { discord_id: string }[];
         
         console.log(`\n[Scheduler] 準備對 ${users.length} 位玩家進行自動更新...`);
         
@@ -51,15 +52,11 @@ export function startScheduler(client?: Client) {
     };
 
     // 依照專案需求：每 3 小時動態觸發一次
-    // 第一次晚 10 分鐘 (06:10)，最後一次早 10 分鐘 (00:50)
-    
-    // 註冊 06:10, 09:10, 12:10, 15:10, 18:10, 21:10 的排程
     cron.schedule('10 6,9,12,15,18,21 * * *', () => {
         console.log('[Scheduler] 觸發 3 小時定期爬蟲任務');
         crawlAllUsers();
     });
 
-    // 註冊 00:50 的排程 (避開 00:55~06:05 區間)
     cron.schedule('50 0 * * *', () => {
         console.log('[Scheduler] 觸發當日最後一次定期爬蟲任務 (00:50)');
         crawlAllUsers();

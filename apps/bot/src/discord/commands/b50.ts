@@ -2,7 +2,7 @@ import { SlashCommandBuilder, AttachmentBuilder, ChatInputCommandInteraction } f
 import { B50Renderer } from '../../render/b50.js';
 import fs from 'fs';
 import path from 'path';
-import db from '../../db/index.js';
+import { dbManager } from '../../db/DatabaseManager.js';
 
 export const data = new SlashCommandBuilder()
     .setName('b50')
@@ -11,29 +11,32 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
     const discordId = interaction.user.id;
-    const outputPath = path.resolve(process.cwd(), `data/b50_${discordId}.png`);
+    const outputPath = path.resolve(process.cwd(), `data/b50_${discordId}_${Date.now()}.png`);
 
     try {
-        // 確保玩家已經綁定帳號且有資料
-        const user = db.prepare('SELECT sega_id, icon_url, cookie FROM users WHERE discord_id = ?').get(discordId) as any;
-        if (!user) {
+        let account: any;
+        try {
+            account = dbManager.getAccountByDiscordId(discordId);
+        } catch (e: any) {
             await interaction.editReply('[錯誤] 找不到您的帳號記錄，請先使用 `/login` 綁定 SEGA ID。');
             return;
         }
 
-        const scoreCount = db.prepare('SELECT COUNT(*) as count FROM scores WHERE discord_id = ?').get(discordId) as { count: number };
+        const mainDb = dbManager.getMainDb();
+        const userRow = mainDb.prepare('SELECT sega_id, icon_url, cookie FROM accounts WHERE account_id = ?').get(account.account_id) as any;
+
+        const userDb = dbManager.getUserDb(account.account_id);
+        const scoreCount = userDb.prepare('SELECT COUNT(*) as count FROM scores').get() as { count: number };
         if (scoreCount.count === 0) {
             await interaction.editReply('[錯誤] 資料庫中沒有您的成績紀錄，請先使用 `/update` 進行同步。');
             return;
         }
 
         // 優先使用 Maimai 官方頭像，若無則降級為 Discord 頭像
-        const avatarUrl = user.icon_url || interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
-        console.log(`[DEBUG B50 Command] 使用者資料庫中的 icon_url: ${user.icon_url}`);
-        console.log(`[DEBUG B50 Command] 最終選擇傳遞給海報的頭像網址: ${avatarUrl}`);
+        const avatarUrl = userRow.icon_url || interaction.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
 
         // 渲染海報
-        await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, user.cookie || null, outputPath);
+        await B50Renderer.renderB50Poster(discordId, interaction.user.username, avatarUrl, userRow.cookie || null, outputPath);
         
         // 傳送圖片
         const attachment = new AttachmentBuilder(outputPath);

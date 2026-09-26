@@ -1,9 +1,10 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, AttachmentBuilder } from 'discord.js';
-import db from '../../db/index';
-import { GrowthChartRenderer } from '../../render/charts';
-import { SongDatabase } from '../../core/song-db';
+import { dbManager } from '../../db/DatabaseManager.js';
+import { GrowthChartRenderer } from '../../render/charts.js';
+import { SongDatabase } from '../../core/song-db.js';
 import path from 'path';
 import fs from 'fs';
+import { requireTier, Tier } from '../middleware.js';
 
 export const data = new SlashCommandBuilder()
     .setName('chart')
@@ -37,7 +38,6 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
     const songDb = SongDatabase.getInstance();
     const allSongs = songDb.getAllSongNames();
 
-    // 過濾出符合的曲名，Discord 最多只能回傳 25 筆選項
     const filtered = allSongs
         .filter(song => song.toLowerCase().includes(focusedValue))
         .slice(0, 25);
@@ -48,6 +48,8 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
 }
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+    if (!await requireTier(interaction, Tier.ADVANCED, '成長曲線圖')) return;
+
     const songName = interaction.options.getString('song_name', true);
     const difficulty = interaction.options.getString('difficulty', true);
     const isDebug = interaction.options.getBoolean('debug') ?? false;
@@ -55,20 +57,27 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.deferReply(); 
 
-    // 從資料庫撈出該曲目所有歷史成績
-    const records = db.prepare(`
+    let account: any;
+    try {
+        account = dbManager.getAccountByDiscordId(discordId);
+    } catch(e) {
+        return;
+    }
+    const userDb = dbManager.getUserDb(account.account_id);
+
+    const records = userDb.prepare(`
         SELECT achievements, recorded_at 
         FROM score_history 
-        WHERE discord_id = ? AND song_name = ? AND difficulty = ?
+        WHERE song_name = ? AND difficulty = ?
         ORDER BY recorded_at ASC
-    `).all(discordId, songName, difficulty) as { achievements: number, recorded_at: string }[];
+    `).all(songName, difficulty) as { achievements: number, recorded_at: string }[];
 
     if (records.length === 0) {
         let debugMsg = `找不到您在該首歌曲該難度的歷史成績，請確認曲名是否正確，或是先使用 \`/update\` 進行同步。`;
         
         if (isDebug) {
-            const similarSongs = db.prepare(`SELECT DISTINCT song_name FROM scores WHERE discord_id = ? AND song_name LIKE ? LIMIT 5`).all(discordId, `%${songName.substring(0, 3)}%`) as { song_name: string }[];
-            const playedDiffs = db.prepare(`SELECT DISTINCT difficulty FROM scores WHERE discord_id = ? AND song_name = ?`).all(discordId, songName) as { difficulty: string }[];
+            const similarSongs = userDb.prepare(`SELECT DISTINCT song_name FROM scores WHERE song_name LIKE ? LIMIT 5`).all(`%${songName.substring(0, 3)}%`) as { song_name: string }[];
+            const playedDiffs = userDb.prepare(`SELECT DISTINCT difficulty FROM scores WHERE song_name = ?`).all(songName) as { difficulty: string }[];
             
             debugMsg += `\n\n**[Debug 診斷資訊]**\n- 查詢曲名: \`${songName}\`\n- 查詢難度: \`${difficulty}\`\n`;
             debugMsg += `- 您在資料庫中該曲有紀錄的難度: ${playedDiffs.length > 0 ? playedDiffs.map(d => d.difficulty).join(', ') : '無'}\n`;
@@ -119,6 +128,4 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             fs.unlinkSync(outputPath);
         }
     }
-
 }
-

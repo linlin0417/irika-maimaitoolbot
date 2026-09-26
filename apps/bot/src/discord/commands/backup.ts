@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
-import db from '../../db/index.js';
+import { dbManager } from '../../db/DatabaseManager.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,20 +29,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const discordId = targetUser.id;
 
-    // 取得資料
-    const user = db.prepare('SELECT * FROM users WHERE discord_id = ?').get(discordId);
-    if (!user) {
+    let account: any;
+    let userRow: any;
+    try {
+        account = dbManager.getAccountByDiscordId(discordId);
+        userRow = dbManager.getMainDb().prepare('SELECT * FROM accounts WHERE account_id = ?').get(account.account_id);
+    } catch (e) {
         return interaction.editReply(`找不到 ${targetUser.username} 的帳號記錄。`);
     }
 
-    const scores = db.prepare('SELECT * FROM scores WHERE discord_id = ?').all(discordId);
-    const scoreHistory = db.prepare('SELECT * FROM score_history WHERE discord_id = ?').all(discordId);
-    const titles = db.prepare('SELECT * FROM user_titles WHERE discord_id = ?').all(discordId);
-    const plates = db.prepare('SELECT * FROM user_plates WHERE discord_id = ?').all(discordId);
-    const frames = db.prepare('SELECT * FROM user_frames WHERE discord_id = ?').all(discordId);
+    const userDb = dbManager.getUserDb(account.account_id);
+
+    const scores = userDb.prepare('SELECT * FROM scores').all();
+    const scoreHistory = userDb.prepare('SELECT * FROM score_history').all();
+    const titles = userDb.prepare('SELECT * FROM user_titles').all();
+    const plates = userDb.prepare('SELECT * FROM user_plates').all();
+    const frames = userDb.prepare('SELECT * FROM user_frames').all();
 
     const backupData = {
-        user,
+        user: userRow,
         scores,
         scoreHistory,
         titles,
@@ -60,7 +65,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const attachment = new AttachmentBuilder(tempFilePath);
         
         try {
-            // 第一優先：嘗試發送私人訊息
             await interaction.user.send({
                 content: `這是 ${targetUser.username} 的資料備份。`,
                 files: [attachment]
@@ -68,7 +72,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             await interaction.editReply(`已經將備份檔案送至您的私人訊息中。`);
         } catch (dmError) {
             console.error('DM 發送失敗，改用備援方式回覆:', dmError);
-            // 備援方案：如果 DM 失敗，直接透過 ephemeral 回覆檔案
             await interaction.editReply({
                 content: `(由於無法發送私人訊息，備份檔案改由這裡發送給您)\n這是 ${targetUser.username} 的資料備份。`,
                 files: [attachment]

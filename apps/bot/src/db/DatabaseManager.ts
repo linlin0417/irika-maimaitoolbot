@@ -18,7 +18,7 @@ export class DatabaseManager {
     private readonly CACHE_TIMEOUT = 60 * 60 * 1000;
 
     private constructor() {
-        this.dataDir = path.resolve(process.cwd(), 'data');
+        this.dataDir = path.resolve(__dirname, '../../data');
         this.usersDir = path.join(this.dataDir, 'users');
         
         if (!fs.existsSync(this.dataDir)) fs.mkdirSync(this.dataDir, { recursive: true });

@@ -3,7 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { dbManager } from '../src/db/DatabaseManager.js';
 
-const dataDir = path.resolve(process.cwd(), 'data');
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dataDir = path.resolve(__dirname, '../data');
 const oldDbPath = path.join(dataDir, 'maimai.db');
 const backupDbPath = path.join(dataDir, `maimai.v1_backup_${Date.now()}.db`);
 
